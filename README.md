@@ -15,6 +15,8 @@ This integration offers two release channels:
 
 We recommend most users to use the stable releases for reliability, while beta versions are available for those interested in testing new features and providing early feedback.
 
+We welcome you to subscribe to our GitHub repository to stay updated with our latest releases and announcements.
+
 **Important Notice**: Dreo is currently working on becoming an official Home Assistant integration. In the near future, this integration will be available directly through the official Home Assistant channels. The current HACS plugin version is not considered stable. Once Dreo is integrated into the official Home Assistant repository, we recommend transitioning to the official integration.
 
 ## Interested in Contributing?
@@ -69,18 +71,55 @@ Features for Tower Fans include:
 
 ### Manual Installation
 
-Copy the `dreo` directory into your `/config/custom_components` directory, then restart your HomeAssistant Core.
+1. Copy the `dreo` directory into your `/config/custom_components` directory in your Home Assistant installation.
+
+2. Restart your Home Assistant instance to load the integration.
+
+**Note about dependencies**: This integration has `hscloud` library as a dependency (version 1.0.6), which is specified in the manifest.json file. When you restart Home Assistant after adding the integration (including in Docker environments), the system will automatically install the required dependencies. You do not need to manually install dependencies in most cases.
+
+If for some reason the automatic installation fails, you can manually install the dependency:
+
+```bash
+pip install hscloud==1.0.6
+```
 
 ## Initial Configuration
 
 > [!IMPORTANT]
 > If you used the very early version of this that required editing `configuration.yaml`, you will need to do a one-time reconfiguration. Delete the configuration entries you added and then go through the configuration flow within HomeAssistant.
 
-1. In HA, open `Settings`
-2. Click `Devices & services`
-3. Click `Add integration` (blue button at the bottom right of the screen)
-4. Search `Dreo` and select it
-5. Enter your `Dreo` username & password (same login you use on the Dreo app)
+### Adding the Dreo Integration to Home Assistant
+
+Follow these detailed steps to configure the Dreo integration after installation:
+
+1. **Access Home Assistant Settings**:
+   - Open your Home Assistant web interface
+   - Click on the gear icon (⚙️) in the lower left sidebar to access **Settings**
+
+2. **Navigate to Integrations**:
+   - In the Settings menu, find and click on **Devices & Services**
+   - You'll see a list of your currently configured integrations
+
+3. **Add Dreo Integration**:
+   - Look for the blue **+ ADD INTEGRATION** button in the bottom right corner of the screen
+   - Click this button to open the integration selection dialog
+
+4. **Find and Select Dreo**:
+   - In the search box that appears, type `Dreo`
+   - The Dreo integration should appear in the search results
+   - Click on the Dreo integration to select it
+
+5. **Enter Your Credentials**:
+   - You will be prompted to enter your Dreo account credentials
+   - Enter the same username (email) and password you use to log in to the Dreo mobile app
+   - Click **Submit** to continue
+
+6. **Complete the Setup**:
+   - If your credentials are correct, Home Assistant will connect to the Dreo cloud service
+   - Your Dreo devices will be automatically discovered and added to Home Assistant
+   - You can now control your Dreo devices from the Home Assistant interface
+
+After completion, your Dreo devices will appear in the Home Assistant dashboard where you can control them.
 
 ## Debugging
 
@@ -113,7 +152,7 @@ Note that these may contain sensitive information, so do always check before sen
 4. Click on the three-dot hamburger menu (next to `Configure`) and click `Download diagnostics`.
 
 
-## Adding New Fans
+## Adding New products
 
 Don't see your model listed above? Create an [issue](https://github.com/JeffSteinbok/hass-dreo/issues) and I'll add it.
 
@@ -134,6 +173,5 @@ Depending on answers, I may reach out and need you to pull some debug logs.
 3. Go look at the logs, you should see something like the below. Create an [issue](https://github.com/JeffSteinbok/hass-dreo/issues) and include the lines related to `pydreo`, the diagnostics `json` file, and if possible, what actions you performed in the app.
 
 ```
-2023-06-29 01:02:25,312 - pydreo - DEBUG - Received message for unknown or unsupported device. SN: XXX341964289-77f2977b24191a4a:001:0000000000b
-2023-06-29 01:02:25,312 - pydreo - DEBUG - Message: {'method': 'control-report', 'devicesn': 'XXX0393341964289-77f2977b24191a4a:001:0000000000b', 'messageid': 'bdf23a1f-c8e1-4e22-8ad3-dc0cd5dfdc7c', 'timestamp': 1688025746, 'reported': {'windtype': 1}}
+2023-06-29 01:02:25,312 - dreo - DEBUG - Received message for current unsupported device. SN: XXX341964289-77f2977b24191a4a:001:0000000000b
 ```
