@@ -27,9 +27,11 @@ We welcome enthusiasts and hobbyists who are interested in contributing to the D
 
 - [Compatibility](#compatibility)
 - [Installation](#installation)
+- [Initial Configuration](#initial-configuration)
 - [Debugging](#debugging)
-- [Adding new Fans](#adding-new-fans)
-- [To Do](#to-do)
+- [Troubleshooting](#troubleshooting)
+  - [If HomeAssistant Doesn't Show Your Device](#if-homeassistant-doesnt-show-your-device)
+- [Adding New Products](#adding-new-products)
 
 ## Compatibility
 
@@ -181,3 +183,49 @@ Don't see your model listed above? Create an [issue](https://github.com/dreo-tea
 - Is temperature supported?
 
 Depending on answers, I may reach out and need you to pull some debug logs.
+
+## Troubleshooting
+
+### If HomeAssistant Doesn't Show Your Device
+
+If you've installed the Dreo integration but your devices don't appear in HomeAssistant, follow these troubleshooting steps:
+
+#### Step 1: Verify Basic Setup
+- **Check Wi-Fi Connection**: Ensure your Dreo device is properly connected to your home Wi-Fi network
+- **Test Mobile App**: Confirm the device works correctly in the Dreo mobile app
+- **Verify Account**: Make sure you're using the exact same account credentials in HomeAssistant as in your Dreo mobile app
+- **Restart Services**: Try restarting both your Dreo device and HomeAssistant instance
+
+#### Step 2: Check Integration Installation
+- Confirm the integration was installed properly:
+  1. Go to **Settings** → **Devices & services**
+  2. Look for "Dreo" in the list of integrations
+  3. If not found, try adding it again following the [Initial Configuration](#initial-configuration) steps
+
+#### Step 3: Enable Debugging
+1. Add debug logging as described in the [Debugging](#debugging) section
+2. Restart HomeAssistant
+3. Try using your Dreo device through the mobile app to generate activity
+4. Check logs for any information about your device
+
+#### Step 4: Determine Support Status
+Look for specific messages in your logs that indicate whether your device model is supported:
+
+- If you see log entries related to your device but it still doesn't appear in the interface, there might be a connection or authentication issue
+- If you see this message, your device model is detected but not yet supported:
+  ```
+  2023-06-29 01:02:25,312 - dreo - DEBUG - Received products for current unsupported device. SN: XXX341964289-77f2977b24191a4a:001:0000000000b
+  ```
+
+#### Reporting Unsupported Devices
+If your device is not yet supported:
+
+1. Collect the following information:
+   - Your exact device model number (found on the device or packaging)
+   - The device's firmware version (if available in the Dreo app)
+   - Diagnostic information using [Option 2](#option-2-download-dreo-specific-diagnostics) above
+   - Screenshots of the device in your Dreo mobile app (if possible)
+
+2. [Create an issue](https://github.com/dreo-team/hacs-dreo/issues/new) on GitHub with all the collected information
+
+> **Note:** Our team is actively expanding device support. When reporting unsupported devices, please provide as much detail as possible to help us prioritize and implement support for your model in future updates.
