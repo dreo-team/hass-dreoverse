@@ -135,26 +135,42 @@ logger:
 
 Now restart HomeAssistant. Perform the actions needed to generate some debugging info.
 
-##### Download the full logs
+### Collecting Debug Information
 
-Note that these may contain sensitive information, so do always check before sending them to someone.
+When troubleshooting issues with the Dreo integration, you may need to collect debug logs or diagnostic files. These files help developers understand what's happening with your system.
 
-1. In HA, open `Settings`
-2. Click `System`
-3. Click `Logs`
-4. Click `Download full log`
+#### Option 1: Download Full Home Assistant Logs
 
-##### Download diagnostics (`.json` file)
+These logs contain detailed information about all Home Assistant operations, including the Dreo integration.
 
-1. In HA, open `Settings`
-2. Click `Device & services`
-3. Click `Dreo`
-4. Click on the three-dot hamburger menu (next to `Configure`) and click `Download diagnostics`.
+**Steps to download full logs:**
+1. Open Home Assistant web interface
+2. Click on **Settings** in the left sidebar
+3. Select **System** from the menu
+4. Click on the **Logs** tab
+5. Look for the **Download full log** button at the bottom right
+6. Save the log file to your computer
 
+> **Important:** Full logs may contain sensitive information about your Home Assistant setup and connected devices. Always review logs before sharing them with others.
+
+#### Option 2: Download Dreo-specific Diagnostics
+
+For issues specifically related to the Dreo integration, downloading diagnostics provides focused information.
+
+**Steps to download diagnostics:**
+1. Open Home Assistant web interface
+2. Click on **Settings** in the left sidebar
+3. Select **Devices & services**
+4. Find and click on **Dreo** integration
+5. Click the three-dot menu (⋮) in the top-right corner of the Dreo card
+6. Select **Download diagnostics**
+7. Save the JSON file to your computer
+
+These diagnostics files are specifically designed to help troubleshoot the Dreo integration while automatically redacting sensitive information.
 
 ## Adding New products
 
-Don't see your model listed above? Create an [issue](https://github.com/JeffSteinbok/hass-dreo/issues) and I'll add it.
+Don't see your model listed above? Create an [issue](https://github.com/dreo-team/hacs-dreo/issues) and I'll add it.
 
 **Please make sure to include:**
 
@@ -165,13 +181,3 @@ Don't see your model listed above? Create an [issue](https://github.com/JeffStei
 - Is temperature supported?
 
 Depending on answers, I may reach out and need you to pull some debug logs.
-
-### Debug Logs for New Fans
-
-1. Enable [debugging](#debugging)
-2. Go to the Dreo app on your mobile device and perform the various commands you want to be able to use in HA. Dreo servers will send updates to the WebSocket that the integration is listening on.
-3. Go look at the logs, you should see something like the below. Create an [issue](https://github.com/JeffSteinbok/hass-dreo/issues) and include the lines related to `pydreo`, the diagnostics `json` file, and if possible, what actions you performed in the app.
-
-```
-2023-06-29 01:02:25,312 - dreo - DEBUG - Received message for current unsupported device. SN: XXX341964289-77f2977b24191a4a:001:0000000000b
-```

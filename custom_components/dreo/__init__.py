@@ -2,20 +2,21 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from datetime import timedelta
-import logging
 from typing import Any
-
-from hscloud.hscloud import HsCloud
-from hscloud.hscloudexception import HsCloudBusinessException, HsCloudException
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers import device_registry as dr, entity_registry as er
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_time_interval
+from hscloud.const import DEVICE_TYPE
+from hscloud.hscloud import HsCloud
+from hscloud.hscloudexception import HsCloudBusinessException, HsCloudException
 
 from .coordinator import DreoDataUpdateCoordinator
 
@@ -62,7 +63,14 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: DreoConfigEntry) 
 
     # Set up coordinators for each device
     for device in config_entry.runtime_data.devices:
+        if DEVICE_TYPE.get(device.get("model")):
+            _LOGGER.debug(
+                "Received message for current unsupported device. SN: %s",
+                device.get("deviceSn"),
+            )
+            continue
         await async_setup_device(hass, config_entry, device)
+
 
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 
