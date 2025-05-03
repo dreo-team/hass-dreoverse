@@ -1,6 +1,7 @@
 {
   "domain": "dreo",
   "name": "Dreo",
+  "version": "1.0.0",
   "codeowners": ["@w-xtao"],
   "config_flow": true,
   "dependencies": ["logger"],
