@@ -1,7 +1,8 @@
 {
   "domain": "dreo",
   "name": "Dreo",
-  "codeowners": ["@dreo-team"],
+  "codeowners": ["@w-xtao"],
+  "version": "1.0.0",
   "config_flow": true,
   "dependencies": ["logger"],
   "documentation": "https://github.com/dreo-team/hacs-dreo",
