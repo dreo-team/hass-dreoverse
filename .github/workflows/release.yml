@@ -17,13 +17,32 @@ jobs:
       - name: "Checkout the repository"
         uses: "actions/checkout@v4.1.7"
 
+      - name: "Set version variables"
+        id: version
+        run: |
+          if [[ ${{ github.event.release.tag_name }} == *"beta"* ]]; then
+            echo "is_beta=true" >> $GITHUB_OUTPUT
+            echo "filename=dreo-${{ github.event.release.tag_name }}.zip" >> $GITHUB_OUTPUT
+          else
+            echo "is_beta=false" >> $GITHUB_OUTPUT
+            echo "filename=dreo-${{ github.event.release.tag_name }}-release.zip" >> $GITHUB_OUTPUT
+          fi
+
+      - name: "Clean cache files before zipping"
+        shell: "bash"
+        run: |
+          cd "${{ github.workspace }}/custom_components/dreo"
+          find . -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null || true
+          find . -name "*.pyc" -delete
+
       - name: "ZIP the integration directory"
         shell: "bash"
         run: |
           cd "${{ github.workspace }}/custom_components/dreo"
-          zip dreo.zip -r ./
+          zip ${{ steps.version.outputs.filename }} -r ./
 
       - name: "Upload the ZIP file to the release"
         uses: "softprops/action-gh-release@v2.0.8"
         with:
-          files: ${{ github.workspace }}/custom_components/dreo/dreo.zip
+          files: ${{ github.workspace }}/custom_components/dreo/${{ steps.version.outputs.filename }}
+          prerelease: ${{ steps.version.outputs.is_beta == 'true' }}

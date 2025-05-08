@@ -1,10 +1,10 @@
 {
   "domain": "dreo",
   "name": "Dreo",
-  "codeowners": ["@w-xtao"],
+  "codeowners": ["@dreo-team"],
   "config_flow": true,
   "dependencies": ["logger"],
-  "documentation": "https://www.home-assistant.io/integrations/dreo",
+  "documentation": "https://github.com/dreo-team/hacs-dreo",
   "integration_type": "hub",
   "iot_class": "cloud_polling",
   "quality_scale": "bronze",
