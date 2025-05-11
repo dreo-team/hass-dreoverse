@@ -1,13 +1,13 @@
 {
   "domain": "dreo",
   "name": "Dreo",
-  "codeowners": ["@w-xtao"],
-  "version": "1.0.0",
+  "codeowners": ["@dreo-team", "@w-xtao","@futurewalk"],
   "config_flow": true,
   "dependencies": ["logger"],
-  "documentation": "https://github.com/dreo-team/hacs-dreo",
+  "documentation": "https://github.com/dreo-team/hass-dreoverse",
   "integration_type": "hub",
   "iot_class": "cloud_polling",
   "quality_scale": "bronze",
-  "requirements": ["hscloud==1.0.6"]
+  "requirements": ["hscloud==1.0.6"],
+  "version": "1.0.0"
 }

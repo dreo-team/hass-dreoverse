@@ -172,7 +172,7 @@ These diagnostics files are specifically designed to help troubleshoot the Dreo 
 
 ## Adding New products
 
-Don't see your model listed above? Create an [issue](https://github.com/dreo-team/hacs-dreo/issues) and I'll add it.
+Don't see your model listed above? Create an [issue](https://github.com/dreo-team/hass-dreoverse/issues) and I'll add it.
 
 **Please make sure to include:**
 
@@ -226,6 +226,6 @@ If your device is not yet supported:
    - Diagnostic information using [Option 2](#option-2-download-dreo-specific-diagnostics) above
    - Screenshots of the device in your Dreo mobile app (if possible)
 
-2. [Create an issue](https://github.com/dreo-team/hacs-dreo/issues/new) on GitHub with all the collected information
+2. [Create an issue](https://github.com/dreo-team/hass-dreoverse/issues/new) on GitHub with all the collected information
 
 > **Note:** Our team is actively expanding device support. When reporting unsupported devices, please provide as much detail as possible to help us prioritize and implement support for your model in future updates.
