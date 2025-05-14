@@ -37,27 +37,37 @@ We welcome enthusiasts and hobbyists who are interested in contributing to the D
 
 Currently supported fan models are listed below.
 
-### Fans
+### products
 
-The following fans types are supported. Not all variants have been tested.
+The following products types are supported. all variants have been tested.
 
-| Fan Type | Model Prefix(es) | Notes |
+| product Type | Model Prefix(es) | Notes |
 | -------- | ------------ | ------ |
-| Tower Fans | DR-HTF | |
+| Tower Fans | DR-HTF | tower fans |
 
 Models that have been specifically tested can be found below.
 
 #### Tower Fans
 
-- DR-HTF001S (Cruiser Pro T1 S)
-- DR-HTF002S (Cruiser Pro T2 S)
-- DR-HTF004S (Pilot Max S)
-- DR-HTF005S (Pilot Pro S)
-- DR-HTF005S-2 (Pilot Pro S v2)
-- DR-HTF007S (Nomad One S)
-- DR-HTF008S (Cruiser Pro T3 S)
-- DR-HTF009S (Cruiser Pro T2S 2nd Gen)
-- DR-HTF010S (MC710S)
+Typically, DREO tower fans with the name* ending with an S support this feature.
+The specified product names and models** that have been specifically tested can be found below.
+
+- Nomad One S (DR-HTF007S)
+- Nomad TF413S (DR-HTF013S)
+- Cruiser Pro T1 S (DR-HTF001S)
+- Cruiser Pro T2 S (DR-HTF002S)
+- Cruiser Pro T2 S 2nd Gen (DR-HTF009S)
+- Cruiser Pro T3 S (DR-HTF008S/DBTF08S)
+- Cruiser TF518S (DR-HTF018S)
+- Cruiser TF609S (DR-HTF019S/DTTF01)
+- Cruiser TF611S (DR-HTF011S)
+- Pilot Pro S (DR-HTF005S)
+- Pilot Max S (DR-HTF004S/DBTF04S)
+- MC710S (DR-HTF010S)
+
+Product name could be found on the package box, user manual, or the label on the device.
+**Model name also could be found on the label of the device or user manual in the product package. 
+Note: If you cannot find your device name or model, please contact us.
 
 Features for Tower Fans include:
 - Power (true, false)
