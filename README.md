@@ -49,8 +49,8 @@ Models that have been specifically tested can be found below.
 
 #### Tower Fans
 
-Typically, DREO tower fans with the name* ending with an S support this feature.
-The specified product names and models** that have been specifically tested can be found below.
+Typically, DREO tower fans with the name ending with an `S` support this feature.
+The specified product names and models that have been specifically tested can be found below.
 
 - Nomad One S (DR-HTF007S)
 - Nomad TF413S (DR-HTF013S)
