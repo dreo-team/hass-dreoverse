@@ -53,14 +53,10 @@ Typically, DREO tower fans with the name ending with an `S` support this feature
 The specified product names and models that have been specifically tested can be found below.
 
 - Nomad One S (DR-HTF007S)
-- Nomad TF413S (DR-HTF013S)
 - Cruiser Pro T1 S (DR-HTF001S)
 - Cruiser Pro T2 S (DR-HTF002S)
 - Cruiser Pro T2 S 2nd Gen (DR-HTF009S)
 - Cruiser Pro T3 S (DR-HTF008S/DBTF08S)
-- Cruiser TF518S (DR-HTF018S)
-- Cruiser TF609S (DR-HTF019S/DTTF01)
-- Cruiser TF611S (DR-HTF011S)
 - Pilot Pro S (DR-HTF005S)
 - Pilot Max S (DR-HTF004S/DBTF04S)
 - MC710S (DR-HTF010S)
