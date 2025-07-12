@@ -1,14 +1,12 @@
 {
   "domain": "dreo",
   "name": "Dreo",
-  "codeowners": ["@dreo-team", "@w-xtao", "@futurewalk"],
+  "codeowners": ["@w-xtao"],
   "config_flow": true,
   "dependencies": ["logger"],
-  "documentation": "https://github.com/dreo-team/hass-dreoverse",
+  "documentation": "https://www.home-assistant.io/integrations/dreo",
   "integration_type": "hub",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/dreo-team/hass-dreoverse/issues",
   "quality_scale": "bronze",
-  "requirements": ["hscloud==1.0.6"],
-  "version": "1.0.0"
+  "requirements": ["pydreo-cloud==0.0.6"]
 }

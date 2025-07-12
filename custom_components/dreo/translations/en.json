@@ -14,16 +14,24 @@
                     "password": "Password",
                     "username": "Email"
                 },
-                "data_description": {
-                    "password": "Password",
-                    "username": "Email"
-                },
                 "description": "Please enter your Dreo credentials",
                 "title": "Connect to Dreo"
             }
         }
     },
     "exceptions": {
+        "set_follow_mode_failed": {
+            "message": "Failed to set follow mode"
+        },
+        "set_hec_humidity_failed": {
+            "message": "Failed to set humidity"
+        },
+        "set_humidifier_mode_failed": {
+            "message": "Failed to set humidifier mode"
+        },
+        "set_humidity_failed": {
+            "message": "Humidity can only be set in Dry mode"
+        },
         "set_oscillate_failed": {
             "message": "Failed to set oscillation"
         },
@@ -32,6 +40,9 @@
         },
         "set_speed_failed": {
             "message": "Failed to set fan speed"
+        },
+        "set_temperature_failed": {
+            "message": "Temperature can only be set in Cool mode"
         },
         "turn_off_failed": {
             "message": "Failed to turn off the device"

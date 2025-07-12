@@ -7,10 +7,6 @@
         "data": {
           "username": "[%key:common::config_flow::data::email%]",
           "password": "[%key:common::config_flow::data::password%]"
-        },
-        "data_description": {
-          "username": "[%key:common::config_flow::data::email%]",
-          "password": "[%key:common::config_flow::data::password%]"
         }
       }
     },
@@ -38,6 +34,21 @@
     },
     "set_oscillate_failed": {
       "message": "Failed to set oscillation"
+    },
+    "set_humidity_failed": {
+      "message": "Humidity can only be set in Dry mode"
+    },
+    "set_hec_humidity_failed": {
+      "message": "Failed to set humidity"
+    },
+    "set_humidifier_mode_failed": {
+      "message": "Failed to set humidifier mode"
+    },
+    "set_temperature_failed": {
+      "message": "Temperature can only be set in Cool mode"
+    },
+    "set_follow_mode_failed": {
+      "message": "Failed to set follow mode"
     }
   }
 }
