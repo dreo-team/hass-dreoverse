@@ -1,6 +1,6 @@
 # Official Dreo Smart Device Integration for Home Assistant
 
-This is the official integration component developed and maintained by the Dreo engineering team for Home Assistant. It enables direct control and monitoring of Dreo smart fans through your Home Assistant installation.
+This is the official integration component developed and maintained by the Dreo engineering team for Home Assistant. It enables direct control and monitoring of Dreo smart devices including fans, air conditioners, ceiling fans, and humidifiers through your Home Assistant installation.
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/hacs/integration)
 
@@ -35,15 +35,19 @@ We welcome enthusiasts and hobbyists who are interested in contributing to the D
 
 ## Compatibility
 
-Currently supported fan models are listed below.
+Currently supported device models are listed below.
 
-### products
+### Supported Products
 
-The following products types are supported. all variants have been tested.
+The following product types are supported. All variants have been tested.
 
-| product Type | Model Prefix(es) | Notes |
+| Product Type | Model Prefix(es) | Notes |
 | -------- | ------------ | ------ |
-| Tower Fans | DR-HTF | tower fans |
+| Tower Fans | DR-HTF | Tower fans |
+| Circulation Fans | DR-HAF, DR-HPF | Circulation fans with oscillation control |
+| Ceiling Fans | DR-HCF | Ceiling fans with light control |
+| Air Conditioners | DR-HAC | Portable air conditioners |
+| Humidifiers | DR-HEC | Evaporative coolers |
 
 Models that have been specifically tested can be found below.
 
@@ -61,16 +65,73 @@ The specified product names and models that have been specifically tested can be
 - Pilot Max S (DR-HTF004S/DBTF04S)
 - MC710S (DR-HTF010S)
 
-Product name could be found on the package box, user manual, or the label on the device.
-**Model name also could be found on the label of the device or user manual in the product package. 
-Note: If you cannot find your device name or model, please contact us.
-
 Features for Tower Fans include:
 - Power (true, false)
 - Preset modes (Normal, Natural, Sleep, Auto)
 - Set Speed (varies by model: 1-4, 1-6, 1-9, or 1-12)
 - Oscillate (true, false)
-- Attributes: `poweron`, `windtype`, `windlevel`, `shakehorizon`
+
+
+#### Circulation Fans
+
+- 511S/611S (DR-HAF001S)
+- PolyFan S (DR-HAF003S)
+- 714S/814S (DR-HAF004S)
+- Falcon S (DR-HPF001S)
+- Falcon X (DR-HPF002S)
+- CF714S (DR-HPF004S)
+- PolyFan Pro S (DR-HPF005S)
+- PF707S (DR-HPF007S)
+- PolyFan 508S (DR-HPF008S)
+- Falcon X (DR-HPF010S)
+
+Features for Circulation Fans include:
+- Power (true, false)
+- Preset modes (Normal, Natural, Sleep, Auto, Turbo, Custom)
+- Set Speed (varies by model: 1-8, 1-9, or 1-10)
+- Oscillation modes (Fixed, Horizontal, Vertical, Pan-tilt, Both)
+- Smart follow mode (select models)
+- Ambient lighting (DR-HPF008S)
+
+#### Ceiling Fans
+
+- CLF513S (DR-HCF003S)
+
+Features for Ceiling Fans include:
+- Fan Power (true, false)
+- Light Power (true, false)
+- Preset modes (Normal, Natural, Sleep, Reverse)
+- Set Speed (1-12)
+- Brightness control (1-100)
+- Color temperature control (1-100)
+
+#### Air Conditioners
+
+- AC516S (DR-HAC006S)
+
+Features for Air Conditioners include:
+- Power (true, false)
+- HVAC modes (Cool, Dry, Fan Only)
+- Preset modes (Sleep, Eco)
+- Set Speed (1-4)
+- Temperature control (64-86°F)
+- Humidity control (40-70%)
+
+#### Humidifiers
+
+- IceWind 712S (DR-HEC002S)
+
+Features for Humidifiers include:
+- Power (true, false)
+- Preset modes (Normal, Auto, Sleep, Natural)
+- Set Speed (1-4)
+- Humidity control (40-90%)
+- Oscillate (true, false)
+
+
+Product name could be found on the package box, user manual, or the label on the device.
+**Model name also could be found on the label of the device or user manual in the product package. 
+Note: If you cannot find your device name or model, please contact us.
 
 
 ## Installation
@@ -83,12 +144,12 @@ Features for Tower Fans include:
 
 2. Restart your Home Assistant instance to load the integration.
 
-**Note about dependencies**: This integration has `hscloud` library as a dependency (version 1.0.6), which is specified in the manifest.json file. When you restart Home Assistant after adding the integration (including in Docker environments), the system will automatically install the required dependencies. You do not need to manually install dependencies in most cases.
+**Note about dependencies**: This integration has `pydreo-cloud` library as a dependency (version 0.0.6), which is specified in the manifest.json file. When you restart Home Assistant after adding the integration (including in Docker environments), the system will automatically install the required dependencies. You do not need to manually install dependencies in most cases.
 
 If for some reason the automatic installation fails, you can manually install the dependency:
 
 ```bash
-pip install hscloud==1.0.6
+pip install pydreo-cloud==0.0.6
 ```
 
 ## Initial Configuration
@@ -176,17 +237,19 @@ For issues specifically related to the Dreo integration, downloading diagnostics
 
 These diagnostics files are specifically designed to help troubleshoot the Dreo integration while automatically redacting sensitive information.
 
-## Adding New products
+## Adding New Products
 
 Don't see your model listed above? Create an [issue](https://github.com/dreo-team/hass-dreoverse/issues) and I'll add it.
 
 **Please make sure to include:**
 
-- Model - in the format above
-- Number of speeds the fan supports (not including "off")
-- Does the fan support oscillating?
+- Model - in the format above (DR-XXX###X)
+- Device type (fan, air conditioner, ceiling fan, humidifier, etc.)
+- Number of speeds the device supports (not including "off")
+- Does the device support oscillating/rotation?
 - What preset modes are supported?
-- Is temperature supported?
+- Is temperature/humidity control supported?
+- Additional features (lighting, smart follow, etc.)
 
 Depending on answers, I may reach out and need you to pull some debug logs.
 
