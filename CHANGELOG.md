@@ -21,8 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🆕 New Device Support
 
-#### Circulation Fan Devices
-- **511S/611S (DR-HAF001S)**: 4-speed control, preset modes, oscillation
+#### Tower Fans
+ **511S/611S (DR-HAF001S)**: 4-speed control, preset modes, oscillation
 - **PolyFan S (DR-HAF003S)**: 8-speed control, multi-direction oscillation
 - **714S/814S (DR-HAF004S)**: 9-speed control, pan-tilt oscillation
 - **Falcon S (DR-HPF001S)**: 8-speed control, basic oscillation
@@ -33,14 +33,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **PolyFan 508S (DR-HPF008S)**: 9-speed control, ambient lighting
 - **Falcon X (DR-HPF010S)**: 8-speed control, directional oscillation
 
-#### Air Conditioning Devices
-- **AC516S (DR-HAC006S)**: Complete climate control with temperature (64-86°F), humidity (40-70%), multiple HVAC modes (Cool/Dry/Fan Only)
+#### TurboPoly™ Fans
+- **TurboPoly™ Table Fan 511S (DR-HAF001S)**: 4-speed control, preset modes, oscillation
+- **TurboPoly™ Fan 513S (DR-HAF003S)**: 8-speed control, multi-direction oscillation
+- **TurboPoly™ Table Fan 714S (DR-HAF004S)**: 9-speed control, pan-tilt oscillation
+- **TurboPoly™ Fan 311S (DR-HPF001S)**: 8-speed control, basic oscillation
+- **TurboPoly™ Fan 502S (DR-HPF002S)**: 8-speed control, directional oscillation
+- **TurboPoly™ Fan 704S (DR-HPF004S)**: 9-speed control, directional oscillation
+- **TurboPoly™ Fan 715S (DR-HPF005S)**: 10-speed control, directional oscillation
+- **TurboPoly™ Fan 707S (DR-HPF007S)**: 10-speed control, smart follow mode
+- **TurboPoly™ Fan 508S (DR-HPF008S)**: 9-speed control, ambient lighting
+- **TurboPoly™ Fan 765S (DR-HPF010S)**: 8-speed control, directional oscillation
 
-#### Ceiling Fan Devices
-- **CLF513S (DR-HCF003S)**: 12-speed fan control, integrated lighting with brightness and color temperature adjustment
+#### Air Conditioners
+- **Portable Air Conditioner 516S (DR-HAC006S)**: Complete climate control with temperature (64-86°F), humidity (40-70%), multiple HVAC modes (Cool/Dry/Fan Only)
 
-#### Humidifier Devices
-- **ec02 (DR-HEC002S)**: Humidity control (40-90%), oscillation, multiple operating modes (Normal/Auto/Sleep/Natural)
+#### Ceiling Fans
+- **Ceiling Fan 513S (DR-HCF003S)**: 12-speed fan control, integrated lighting with brightness and color temperature adjustment
+
+#### Humidifiers
+- **Evaporative Cooler 712S (DR-HEC002S)**: Humidity control (40-90%), oscillation, multiple operating modes (Normal/Auto/Sleep/Natural)
 
 ### 🔧 Technical Improvements
 

@@ -4,7 +4,9 @@ This is the official integration component developed and maintained by the Dreo 
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/hacs/integration)
 
-If you like Dreo products and want to support this integration, you can purchase our devices through this link: [Dreo Fans on Amazon](https://www.amazon.com/gp/search?ie=UTF8&tag=jeffsteinbok-20&linkCode=ur2&linkId=264bf9285db76a172f81bad93760d162&camp=1789&creative=9325&index=hpc&keywords=Dreo%20Smart%20Fan)
+If you like Dreo products and want to support this integration, you can purchase our devices through this link: [Dreo Fans on Amazon](https://www.amazon.com/s?k=Dreo+Smart+Fan). For more information about our products, please visit our official website at [https://www.dreo.com/](https://www.dreo.com/).
+
+**Special Offer**: If you submit issues or provide valuable suggestions for our products that we adopt, we will offer you a 15% discount coupon (85% of original price) for purchases on our official website.
 
 ## Version Information
 
@@ -25,6 +27,7 @@ We welcome enthusiasts and hobbyists who are interested in contributing to the D
 
 ## Table of Contents
 
+- [Acknowledgments](#acknowledgments)
 - [Compatibility](#compatibility)
 - [Installation](#installation)
 - [Initial Configuration](#initial-configuration)
@@ -72,18 +75,18 @@ Features for Tower Fans include:
 - Oscillate (true, false)
 
 
-#### Circulation Fans
+#### TurboPoly™ Fans
 
-- 511S/611S (DR-HAF001S)
-- PolyFan S (DR-HAF003S)
-- 714S/814S (DR-HAF004S)
-- Falcon S (DR-HPF001S)
-- Falcon X (DR-HPF002S)
-- CF714S (DR-HPF004S)
-- PolyFan Pro S (DR-HPF005S)
-- PF707S (DR-HPF007S)
-- PolyFan 508S (DR-HPF008S)
-- Falcon X (DR-HPF010S)
+- TurboPoly™ Table Fan 511S (DR-HAF001S)
+- TurboPoly™ Fan 513S (DR-HAF003S)
+- TurboPoly™ Table Fan 714S (DR-HAF004S)
+- TurboPoly™ Fan 311S (DR-HPF001S)
+- TurboPoly™ Fan 502S (DR-HPF002S)
+- TurboPoly™ Fan 704S (DR-HPF004S)
+- TurboPoly™ Fan 715S (DR-HPF005S)
+- TurboPoly™ Fan 707S (DR-HPF007S)
+- TurboPoly™ Fan 508S (DR-HPF008S)
+- TurboPoly™ Fan 765S (DR-HPF010S)
 
 Features for Circulation Fans include:
 - Power (true, false)
@@ -95,7 +98,7 @@ Features for Circulation Fans include:
 
 #### Ceiling Fans
 
-- CLF513S (DR-HCF003S)
+- Ceiling Fan 513S (DR-HCF003S)
 
 Features for Ceiling Fans include:
 - Fan Power (true, false)
@@ -107,7 +110,7 @@ Features for Ceiling Fans include:
 
 #### Air Conditioners
 
-- AC516S (DR-HAC006S)
+- Portable Air Conditioner 516S (DR-HAC006S)
 
 Features for Air Conditioners include:
 - Power (true, false)
@@ -119,7 +122,7 @@ Features for Air Conditioners include:
 
 #### Humidifiers
 
-- IceWind 712S (DR-HEC002S)
+- Evaporative Cooler 712S (DR-HEC002S)
 
 Features for Humidifiers include:
 - Power (true, false)
@@ -298,3 +301,9 @@ If your device is not yet supported:
 2. [Create an issue](https://github.com/dreo-team/hass-dreoverse/issues/new) on GitHub with all the collected information
 
 > **Note:** Our team is actively expanding device support. When reporting unsupported devices, please provide as much detail as possible to help us prioritize and implement support for your model in future updates.
+
+## Acknowledgments
+
+We would like to thank [Jeff Steinbok](https://github.com/JeffSteinbok) for his pioneering work on the unofficial Dreo integration at [https://github.com/JeffSteinbok/hass-dreo](https://github.com/JeffSteinbok/hass-dreo)
+
+We also extend our gratitude to all community members who have supported the Dreo ecosystem through testing, feedback, and development.
