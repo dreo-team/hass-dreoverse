@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2025-08-26
+
+### 🔄 Dependency Update
+- Bump `pydreo-cloud` to `0.0.7`
+
+### 🌍 Regional & Authentication
+- European Region Support: Added support for European region user login
+- Smart Region Detection: Automatically select the correct API server based on user token
+- Automatic detection of token suffix (EU/NA) to determine API endpoint
+- Support for token format: `token:EU` (European region) and `token:NA` (North American region)
+- Tokens without suffix default to the North American endpoint
+
+### ✅ Backward Compatibility
+- Maintain full compatibility with existing North American users; no changes required
+
 ## [2.0.0] - 2025-07-13
 
 ### 🚀 Major Updates
