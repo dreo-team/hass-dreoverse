@@ -1,0 +1,102 @@
+"""Constants for the Dreo integration."""
+
+from enum import StrEnum
+
+DOMAIN = "dreo"
+
+
+class DreoEntityConfigSpec(StrEnum):
+    """Dreo config keys."""
+
+    TOP_CONFIG = "config"
+    FAN_ENTITY_CONF = "fan_entity_config"
+    LIGHT_ENTITY_CONF = "light_entity_config"
+    RGBLIGHT_ENTITY_CONF = "rgbLight_entity_config"
+    TOGGLE_ENTITY_CONF = "toggle_entity_config"
+    SELECT_ENTITY_CONF = "select_entity_config"
+    HUMIDIFIER_ENTITY_CONF = "humidifier_entity_config"
+
+
+class DreoFeatureSpec(StrEnum):
+    """Dreo value range keys."""
+
+    PRESET_MODES = "preset_modes"
+    SPEED_RANGE = "speed_range"
+    TEMPERATURE_RANGE = "temperature_range"
+    HUMIDITY_RANGE = "humidity_range"
+    BRIGHTNESS_PERCENTAGE = "brightness_percentage"
+    RGB_BRIGHTNESS = "rgb_brightness"
+    LIGHT_MODES = "light_modes"
+    COLOR_TEMPERATURE_RANGE = "color_temperature_range"
+    HUMIDIFIER_MODE_CONFIG = "humidity_mode_config"
+    DIRECTIVE_GRAPH = "directive_graph"
+    DESCRIPTION_LIMITS = "description_limits"
+
+
+class DreoDirective(StrEnum):
+    """Dreo directive keys."""
+
+    CONNECTED = "connected"
+    POWER_SWITCH = "power_switch"
+    AMBIENT_SWITCH = "ambient_switch"
+    LIGHT_SWITCH = "light_switch"
+    MODE = "mode"
+    OSCILLATE = "oscillate"
+    OSCMODE = "oscmode"
+    SPEED = "speed"
+    LIGHTMODE = "lightmode"
+    DISPLAY_MODE = "dispmode"
+    HVAC_MODE = "hvacmode"
+    SWING_SWITCH = "swing_switch"
+    TEMPERATURE = "temperature"
+    HUMIDITY = "humidity"
+    AMBIENT_RGB_MODE = "atmmode"
+    AMBIENT_RGB_COLOR = "atmcolor"
+    AMBIENT_RGB_BRIGHTNESS = "atmbri"
+    AMBIENT_RGB_SPEED = "atmspeed"
+    LIGHT_BRIGHTNESS = "brightness"
+    LIGHT_COLOR_TEMP = "colortemp"
+    RGB_HUMIDITY_THRESHOLD = "rgb_threshold"
+
+
+class DreoDeviceType(StrEnum):
+    """Dreo device types."""
+
+    FAN = "fan"
+    CIR_FAN = "circulation_fan"
+    CEILING_FAN = "ceiling_fan"
+    RGBLIGHT_CEILING_FAN = "rgblight_ceiling_fan"
+    HAC = "hac"
+    HEC = "hec"  # Hybrid Evaporative Cooler
+    HAP = "hap"  # Air Purifier
+    HUMIDIFIER = "humidifier"  # Humidifier
+    DEHUMIDIFIER = "dehumidifier"  # Dehumidifier
+
+
+CIR_FAN_SWING_ENTITY = "swing_direction"
+
+
+class DreoErrorCode(StrEnum):
+    """Error translation keys used across the integration."""
+
+    TURN_ON_FAILED = "turn_on_failed"
+    TURN_OFF_FAILED = "turn_off_failed"
+    SET_PRESET_MODE_FAILED = "set_preset_mode_failed"
+    SET_SPEED_FAILED = "set_speed_failed"
+    SET_FAN_MODE_FAILED = "set_fan_mode_failed"
+    SET_SWING_FAILED = "set_swing_failed"
+    SET_SWING_DIRECTION_FAILED = "set_swing_direction_failed"
+    SET_BRIGHTNESS_FAILED = "set_brightness_failed"
+    SET_TEMPERATURE_FAILED = "set_temperature_failed"
+    SET_HUMIDITY_FAILED = "set_humidity_failed"
+    SET_HEC_HUMIDITY_FAILED = "set_hec_humidity_failed"
+    SET_HUMIDIFIER_MODE_FAILED = "set_humidifier_mode_failed"
+    SET_HVAC_MODE_FAILED = "set_hvac_mode_failed"
+    SET_RGB_SPEED_FAILED = "set_rgb_speed_failed"
+    SET_FOLLOW_MODE_FAILED = "set_follow_mode_failed"
+    SET_LED_SWITCH_FAILED = "set_led_switch_failed"
+    SET_LIGHTSENSOR_SWITCH_FAILED = "set_lightsensor_switch_failed"
+    SET_MUTE_SWITCH_FAILED = "set_mute_switch_failed"
+    SET_HUMIDIFIER_HUMIDITY_FAILED = "set_humidifier_humidity_failed"
+    HUMIDITY_NOT_SUPPORTED_IN_MODE = "humidity_not_supported_in_mode"
+    SET_RGB_THRESHOLD_FAILED = "set_rgb_threshold_failed"

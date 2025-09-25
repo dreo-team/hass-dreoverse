@@ -20,6 +20,9 @@
         }
     },
     "exceptions": {
+        "humidity_not_supported_in_mode": {
+            "message": "Humidity control is not supported in the current mode"
+        },
         "set_follow_mode_failed": {
             "message": "Failed to set follow mode"
         },
@@ -37,6 +40,9 @@
         },
         "set_preset_mode_failed": {
             "message": "Failed to set preset mode"
+        },
+        "set_rgb_threshold_failed": {
+            "message": "Failed to set RGB humidity threshold"
         },
         "set_speed_failed": {
             "message": "Failed to set fan speed"

@@ -13,16 +13,11 @@ from homeassistant.util.percentage import percentage_to_ranged_value
 
 from . import DreoConfigEntry
 from .const import (
-    CEILING_FAN_DEVICE_TYPE,
-    CIR_FAN_DEVICE_TYPE,
-    ERROR_SET_HEC_HUMIDITY_FAILED,
-    ERROR_SET_PRESET_MODE_FAILED,
-    ERROR_SET_SPEED_FAILED,
-    ERROR_SET_SWING_FAILED,
-    ERROR_TURN_OFF_FAILED,
-    ERROR_TURN_ON_FAILED,
-    FAN_DEVICE_TYPE,
-    HEC_DEVICE_TYPE,
+    DreoDeviceType,
+    DreoDirective,
+    DreoEntityConfigSpec,
+    DreoErrorCode,
+    DreoFeatureSpec,
 )
 from .coordinator import DreoDataUpdateCoordinator, DreoFanDeviceData, DreoHecDeviceData
 from .entity import DreoEntity
@@ -40,7 +35,9 @@ async def async_setup_entry(
     @callback
     def async_add_fan_devices() -> None:
         """Add fan devices."""
-        new_fans: list[DreoFan | DreoCirculationFan | DreoHecFan | DreoCeilingFan] = []
+        fans: list[
+            DreoFan | DreoCirculationFan | DreoHecFan | DreoCeilingFan | DreoHapFan
+        ] = []
 
         for device in config_entry.runtime_data.devices:
             device_type = device.get("deviceType")
@@ -49,10 +46,13 @@ async def async_setup_entry(
 
             # Only process fan-type devices (including HEC and ceiling fan)
             if device_type not in [
-                FAN_DEVICE_TYPE,
-                CIR_FAN_DEVICE_TYPE,
-                CEILING_FAN_DEVICE_TYPE,
-                HEC_DEVICE_TYPE,
+                DreoDeviceType.FAN,
+                DreoDeviceType.CIR_FAN,
+                DreoDeviceType.CEILING_FAN,
+                DreoDeviceType.HAP,
+                DreoDeviceType.HEC,
+                DreoDeviceType.RGBLIGHT_CEILING_FAN,
+                DreoDeviceType.DEHUMIDIFIER,
             ]:
                 continue
 
@@ -65,21 +65,22 @@ async def async_setup_entry(
                 _LOGGER.error("Coordinator not found for device %s", device_id)
                 continue
 
-            if device_type == FAN_DEVICE_TYPE:
-                fan = DreoFan(device, coordinator)
-                new_fans.append(fan)
-            elif device_type == CIR_FAN_DEVICE_TYPE:
-                circulation_fan = DreoCirculationFan(device, coordinator)
-                new_fans.append(circulation_fan)
-            elif device_type == CEILING_FAN_DEVICE_TYPE:
-                ceiling_fan = DreoCeilingFan(device, coordinator)
-                new_fans.append(ceiling_fan)
-            elif device_type == HEC_DEVICE_TYPE:
-                hec_fan = DreoHecFan(device, coordinator)
-                new_fans.append(hec_fan)
+            if device_type == DreoDeviceType.FAN:
+                fans.append(DreoFan(device, coordinator))
+            elif device_type == DreoDeviceType.CIR_FAN:
+                fans.append(DreoCirculationFan(device, coordinator))
+            elif device_type in [
+                DreoDeviceType.CEILING_FAN,
+                DreoDeviceType.RGBLIGHT_CEILING_FAN,
+            ]:
+                fans.append(DreoCeilingFan(device, coordinator))
+            elif device_type == DreoDeviceType.HEC:
+                fans.append(DreoHecFan(device, coordinator))
+            elif device_type == DreoDeviceType.HAP:
+                fans.append(DreoHapFan(device, coordinator))
 
-        if new_fans:
-            async_add_entities(new_fans)
+        if fans:
+            async_add_entities(fans)
 
     async_add_fan_devices()
 
@@ -98,7 +99,7 @@ class DreoFan(DreoEntity, FanEntity):
     _attr_percentage = 0
     _attr_preset_mode = None
     _attr_oscillating = None
-    _low_high_range: tuple[int, int]
+    _speed_range: tuple[int, int]
 
     def __init__(
         self,
@@ -108,14 +109,11 @@ class DreoFan(DreoEntity, FanEntity):
         """Initialize the Dreo fan."""
         super().__init__(device, coordinator, "fan", None)
 
-        model_config = coordinator.model_config
-        speed_range = model_config.get("speed_range")
-
-        if speed_range:
-            self._low_high_range = tuple(speed_range)
-        else:
-            self._low_high_range = (1, 9)
-        self._attr_preset_modes = model_config.get("preset_modes")
+        fan_config = coordinator.model_config.get(
+            DreoEntityConfigSpec.FAN_ENTITY_CONF, {}
+        )
+        self._speed_range = tuple(fan_config.get(DreoFeatureSpec.SPEED_RANGE, []))
+        self._attr_preset_modes = fan_config.get(DreoFeatureSpec.PRESET_MODES, [])
 
     @callback
     def _handle_coordinator_update(self):
@@ -149,36 +147,35 @@ class DreoFan(DreoEntity, FanEntity):
     ) -> None:
         """Turn the device on."""
         await self.async_execute_fan_common_command(
-            ERROR_TURN_ON_FAILED, percentage=percentage, preset_mode=preset_mode
+            DreoErrorCode.TURN_ON_FAILED, percentage=percentage, preset_mode=preset_mode
         )
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the device off."""
         await self.async_send_command_and_update(
-            ERROR_TURN_OFF_FAILED, power_switch=False
+            DreoErrorCode.TURN_OFF_FAILED, power_switch=False
         )
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set the preset mode of fan."""
         await self.async_execute_fan_common_command(
-            ERROR_SET_PRESET_MODE_FAILED, preset_mode=preset_mode
+            DreoErrorCode.SET_PRESET_MODE_FAILED, preset_mode=preset_mode
         )
 
     async def async_set_percentage(self, percentage: int) -> None:
         """Set the speed of fan."""
-
         if percentage <= 0:
             await self.async_turn_off()
             return
 
         await self.async_execute_fan_common_command(
-            ERROR_SET_SPEED_FAILED, percentage=percentage
+            DreoErrorCode.SET_SPEED_FAILED, percentage=percentage
         )
 
     async def async_oscillate(self, oscillating: bool) -> None:
         """Set the oscillation of fan."""
         await self.async_execute_fan_common_command(
-            ERROR_SET_SWING_FAILED, oscillate=oscillating
+            DreoErrorCode.SET_SWING_FAILED, oscillate=oscillating
         )
 
     async def async_execute_fan_common_command(
@@ -189,21 +186,18 @@ class DreoFan(DreoEntity, FanEntity):
         oscillate: bool | None = None,
     ) -> None:
         """Execute fan command with common parameter handling."""
-
         command_params: dict[str, Any] = {}
 
         if not self.is_on:
-            command_params["power_switch"] = True
+            command_params[DreoDirective.POWER_SWITCH] = True
 
-        if percentage is not None and percentage > 0 and self._low_high_range:
-            speed = math.ceil(
-                percentage_to_ranged_value(self._low_high_range, percentage)
-            )
+        if percentage is not None and percentage > 0 and self._speed_range:
+            speed = math.ceil(percentage_to_ranged_value(self._speed_range, percentage))
             if speed is not None and speed > 0:
-                command_params["speed"] = speed
+                command_params[DreoDirective.SPEED] = speed
 
         if preset_mode is not None:
-            command_params["mode"] = preset_mode
+            command_params[DreoDirective.MODE] = preset_mode
         if oscillate is not None:
             command_params["oscillate"] = oscillate
 
@@ -224,7 +218,7 @@ class DreoCirculationFan(DreoEntity, FanEntity):
     _attr_is_on = False
     _attr_percentage = 0
     _attr_preset_mode = None
-    _low_high_range: tuple[int, int]
+    _speed_range: tuple[int, int]
 
     def __init__(
         self,
@@ -232,17 +226,13 @@ class DreoCirculationFan(DreoEntity, FanEntity):
         coordinator: DreoDataUpdateCoordinator,
     ) -> None:
         """Initialize the Dreo circulation fan."""
-        super().__init__(device, coordinator, CIR_FAN_DEVICE_TYPE, None)
+        super().__init__(device, coordinator, DreoDeviceType.CIR_FAN, None)
 
-        config = coordinator.model_config
-
-        self._attr_preset_modes = config.get("preset_modes")
-
-        self._select_options = config.get("selectOptions")
-
-        speed_range = config.get("speed_range")
-        if speed_range and len(speed_range) >= 2:
-            self._low_high_range = tuple(speed_range)
+        fan_config = coordinator.model_config.get(
+            DreoEntityConfigSpec.FAN_ENTITY_CONF, {}
+        )
+        self._attr_preset_modes = fan_config.get(DreoFeatureSpec.PRESET_MODES, [])
+        self._speed_range = tuple(fan_config.get(DreoFeatureSpec.SPEED_RANGE, []))
 
     @callback
     def _handle_coordinator_update(self):
@@ -275,19 +265,19 @@ class DreoCirculationFan(DreoEntity, FanEntity):
     ) -> None:
         """Turn the device on."""
         await self.async_execute_circulation_fan_command(
-            ERROR_TURN_ON_FAILED, percentage=percentage, preset_mode=preset_mode
+            DreoErrorCode.TURN_ON_FAILED, percentage=percentage, preset_mode=preset_mode
         )
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the device off."""
         await self.async_send_command_and_update(
-            ERROR_TURN_OFF_FAILED, power_switch=False
+            DreoErrorCode.TURN_OFF_FAILED, power_switch=False
         )
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set the preset mode of circulation fan."""
         await self.async_execute_circulation_fan_command(
-            ERROR_SET_PRESET_MODE_FAILED, preset_mode=preset_mode
+            DreoErrorCode.SET_PRESET_MODE_FAILED, preset_mode=preset_mode
         )
 
     async def async_set_percentage(self, percentage: int) -> None:
@@ -297,7 +287,7 @@ class DreoCirculationFan(DreoEntity, FanEntity):
             return
 
         await self.async_execute_circulation_fan_command(
-            ERROR_SET_SPEED_FAILED, percentage=percentage
+            DreoErrorCode.SET_SPEED_FAILED, percentage=percentage
         )
 
     async def async_execute_circulation_fan_command(
@@ -311,17 +301,15 @@ class DreoCirculationFan(DreoEntity, FanEntity):
         command_params: dict[str, Any] = {}
 
         if not self.is_on:
-            command_params["power_switch"] = True
+            command_params[DreoDirective.POWER_SWITCH] = True
 
-        if percentage is not None and percentage > 0 and self._low_high_range:
-            speed = math.ceil(
-                percentage_to_ranged_value(self._low_high_range, percentage)
-            )
+        if percentage is not None and percentage > 0 and self._speed_range:
+            speed = math.ceil(percentage_to_ranged_value(self._speed_range, percentage))
             if speed is not None and speed > 0:
-                command_params["speed"] = speed
+                command_params[DreoDirective.SPEED] = speed
 
         if preset_mode is not None:
-            command_params["mode"] = preset_mode
+            command_params[DreoDirective.MODE] = preset_mode
 
         await self.async_send_command_and_update(
             error_translation_key, **command_params
@@ -342,7 +330,7 @@ class DreoHecFan(DreoEntity, FanEntity):
     _attr_percentage = 0
     _attr_preset_mode = None
     _attr_oscillating = None
-    _low_high_range: tuple[int, int]
+    _speed_range: tuple[int, int]
 
     def __init__(
         self,
@@ -350,16 +338,15 @@ class DreoHecFan(DreoEntity, FanEntity):
         coordinator: DreoDataUpdateCoordinator,
     ) -> None:
         """Initialize the Dreo HEC fan."""
-        super().__init__(device, coordinator, HEC_DEVICE_TYPE, None)
+        super().__init__(device, coordinator, DreoDeviceType.HEC, None)
 
-        model_config = coordinator.model_config
-        speed_range = model_config.get("speed_range")
+        fan_config = coordinator.model_config.get(
+            DreoEntityConfigSpec.FAN_ENTITY_CONF, {}
+        )
+        self._speed_range = tuple(fan_config.get(DreoFeatureSpec.SPEED_RANGE, []))
+        self._attr_preset_modes = fan_config.get(DreoFeatureSpec.PRESET_MODES, [])
 
-        if speed_range:
-            self._low_high_range = tuple(speed_range)
-        self._attr_preset_modes = model_config.get("preset_modes")
-
-        humidity_range = model_config.get("humidity_range")
+        humidity_range = fan_config.get(DreoFeatureSpec.HUMIDITY_RANGE, [])
         if humidity_range:
             self._min_humidity = float(humidity_range[0])
             self._max_humidity = float(humidity_range[1])
@@ -392,8 +379,8 @@ class DreoHecFan(DreoEntity, FanEntity):
 
             self._attr_oscillating = getattr(hec_data, "oscillate", None)
 
-            if hec_data.speed_level and self._low_high_range:
-                speed_range = self._low_high_range[1] - self._low_high_range[0] + 1
+            if hec_data.speed_level and self._speed_range:
+                speed_range = self._speed_range[1] - self._speed_range[0] + 1
                 percentage = (hec_data.speed_level / speed_range) * 100
                 self._attr_percentage = min(100, max(0, int(percentage)))
             else:
@@ -430,10 +417,10 @@ class DreoHecFan(DreoEntity, FanEntity):
             return 0
 
         if hasattr(device_data, "speed_level") and device_data.speed_level is not None:
-            if not self._low_high_range:
+            if not self._speed_range:
                 return 0
 
-            min_speed, max_speed = self._low_high_range
+            min_speed, max_speed = self._speed_range
             if device_data.speed_level <= min_speed:
                 return 1
             if device_data.speed_level >= max_speed:
@@ -450,19 +437,19 @@ class DreoHecFan(DreoEntity, FanEntity):
     ) -> None:
         """Turn the device on."""
         await self.async_execute_hec_command(
-            ERROR_TURN_ON_FAILED, percentage=percentage, preset_mode=preset_mode
+            DreoErrorCode.TURN_ON_FAILED, percentage=percentage, preset_mode=preset_mode
         )
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the device off."""
         await self.async_send_command_and_update(
-            ERROR_TURN_OFF_FAILED, power_switch=False
+            DreoErrorCode.TURN_OFF_FAILED, power_switch=False
         )
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set the preset mode of HEC fan."""
         await self.async_execute_hec_command(
-            ERROR_SET_PRESET_MODE_FAILED, preset_mode=preset_mode
+            DreoErrorCode.SET_PRESET_MODE_FAILED, preset_mode=preset_mode
         )
 
     async def async_set_percentage(self, percentage: int) -> None:
@@ -472,13 +459,13 @@ class DreoHecFan(DreoEntity, FanEntity):
             return
 
         await self.async_execute_hec_command(
-            ERROR_SET_SPEED_FAILED, percentage=percentage
+            DreoErrorCode.SET_SPEED_FAILED, percentage=percentage
         )
 
     async def async_oscillate(self, oscillating: bool) -> None:
         """Set the oscillation of HEC fan."""
         await self.async_execute_hec_command(
-            ERROR_SET_SWING_FAILED, oscillate=oscillating
+            DreoErrorCode.SET_SWING_FAILED, oscillate=oscillating
         )
 
     async def async_set_humidity(self, humidity: int) -> None:
@@ -495,12 +482,12 @@ class DreoHecFan(DreoEntity, FanEntity):
         command_params: dict[str, Any] = {}
 
         if not self.is_on:
-            command_params["power_switch"] = True
+            command_params[DreoDirective.POWER_SWITCH] = True
 
         command_params["humidity"] = int(humidity)
 
         await self.async_send_command_and_update(
-            ERROR_SET_HEC_HUMIDITY_FAILED, **command_params
+            DreoErrorCode.SET_HEC_HUMIDITY_FAILED, **command_params
         )
 
     async def async_execute_hec_command(
@@ -514,18 +501,18 @@ class DreoHecFan(DreoEntity, FanEntity):
         command_params: dict[str, Any] = {}
 
         if not self.is_on:
-            command_params["power_switch"] = True
+            command_params[DreoDirective.POWER_SWITCH] = True
 
-        if percentage is not None and percentage > 0 and self._low_high_range:
-            speed_range = self._low_high_range[1] - self._low_high_range[0] + 1
+        if percentage is not None and percentage > 0 and self._speed_range:
+            speed_range = self._speed_range[1] - self._speed_range[0] + 1
             speed_level = max(1, math.ceil((percentage / 100) * speed_range))
-            command_params["speed"] = speed_level
+            command_params[DreoDirective.SPEED] = speed_level
 
         if preset_mode is not None:
-            command_params["mode"] = preset_mode.capitalize()
+            command_params[DreoDirective.MODE] = preset_mode.capitalize()
 
         if oscillate is not None:
-            command_params["oscillate"] = oscillate
+            command_params[DreoDirective.OSCILLATE] = oscillate
 
         await self.async_send_command_and_update(
             error_translation_key, **command_params
@@ -544,7 +531,7 @@ class DreoCeilingFan(DreoEntity, FanEntity):
     _attr_is_on = False
     _attr_percentage = 0
     _attr_preset_mode = None
-    _low_high_range: tuple[int, int]
+    _speed_range: tuple[int, int]
 
     def __init__(
         self,
@@ -552,11 +539,13 @@ class DreoCeilingFan(DreoEntity, FanEntity):
         coordinator: DreoDataUpdateCoordinator,
     ) -> None:
         """Initialize the Dreo ceiling fan."""
-        super().__init__(device, coordinator, CEILING_FAN_DEVICE_TYPE, None)
+        super().__init__(device, coordinator, DreoDeviceType.CEILING_FAN, None)
 
-        model_config = coordinator.model_config
-        self._low_high_range = tuple(model_config.get("speed_range", []))
-        self._attr_preset_modes = model_config.get("preset_modes")
+        fan_config = coordinator.model_config.get(
+            DreoEntityConfigSpec.FAN_ENTITY_CONF, {}
+        )
+        self._speed_range = tuple(fan_config.get(DreoFeatureSpec.SPEED_RANGE, []))
+        self._attr_preset_modes = fan_config.get(DreoFeatureSpec.PRESET_MODES, [])
 
     @callback
     def _handle_coordinator_update(self):
@@ -583,8 +572,8 @@ class DreoCeilingFan(DreoEntity, FanEntity):
             else:
                 self._attr_preset_mode = "Normal"
 
-            if ceiling_fan_data.speed_level and self._low_high_range:
-                speed_range = self._low_high_range[1] - self._low_high_range[0] + 1
+            if ceiling_fan_data.speed_level and self._speed_range:
+                speed_range = self._speed_range[1] - self._speed_range[0] + 1
                 percentage = (ceiling_fan_data.speed_level / speed_range) * 100
                 self._attr_percentage = min(100, max(0, int(percentage)))
             else:
@@ -598,19 +587,19 @@ class DreoCeilingFan(DreoEntity, FanEntity):
     ) -> None:
         """Turn the device on."""
         await self.async_execute_ceiling_fan_command(
-            ERROR_TURN_ON_FAILED, percentage=percentage, preset_mode=preset_mode
+            DreoErrorCode.TURN_ON_FAILED, percentage=percentage, preset_mode=preset_mode
         )
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the device off."""
         await self.async_send_command_and_update(
-            ERROR_TURN_OFF_FAILED, power_switch=False
+            DreoErrorCode.TURN_OFF_FAILED, power_switch=False
         )
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set the preset mode of ceiling fan."""
         await self.async_execute_ceiling_fan_command(
-            ERROR_SET_PRESET_MODE_FAILED, preset_mode=preset_mode
+            DreoErrorCode.SET_PRESET_MODE_FAILED, preset_mode=preset_mode
         )
 
     async def async_set_percentage(self, percentage: int) -> None:
@@ -620,7 +609,7 @@ class DreoCeilingFan(DreoEntity, FanEntity):
             return
 
         await self.async_execute_ceiling_fan_command(
-            ERROR_SET_SPEED_FAILED, percentage=percentage
+            DreoErrorCode.SET_SPEED_FAILED, percentage=percentage
         )
 
     async def async_execute_ceiling_fan_command(
@@ -633,15 +622,155 @@ class DreoCeilingFan(DreoEntity, FanEntity):
         command_params: dict[str, Any] = {}
 
         if not self.is_on:
-            command_params["power_switch"] = True
+            command_params[DreoDirective.POWER_SWITCH] = True
 
-        if percentage is not None and percentage > 0 and self._low_high_range:
-            speed_range = self._low_high_range[1] - self._low_high_range[0] + 1
+        if percentage is not None and percentage > 0 and self._speed_range:
+            speed_range = self._speed_range[1] - self._speed_range[0] + 1
             speed_level = max(1, math.ceil((percentage / 100) * speed_range))
-            command_params["speed"] = speed_level
+            command_params[DreoDirective.SPEED] = speed_level
 
         if preset_mode is not None:
-            command_params["mode"] = preset_mode
+            command_params[DreoDirective.MODE] = preset_mode
+
+        await self.async_send_command_and_update(
+            error_translation_key, **command_params
+        )
+
+
+class DreoHapFan(DreoEntity, FanEntity):
+    """Dreo HAP (Air Purifier) fan with toggles and modes."""
+
+    _attr_supported_features = (
+        FanEntityFeature.PRESET_MODE
+        | FanEntityFeature.SET_SPEED
+        | FanEntityFeature.TURN_ON
+        | FanEntityFeature.TURN_OFF
+    )
+    _attr_is_on = False
+    _attr_percentage = 0
+    _attr_preset_mode = None
+    _speed_range: tuple[int, int]
+
+    def __init__(
+        self,
+        device: dict[str, Any],
+        coordinator: DreoDataUpdateCoordinator,
+    ) -> None:
+        """Initialize the Dreo HAP fan."""
+        super().__init__(device, coordinator, DreoDeviceType.HAP, None)
+
+        fan_config = coordinator.model_config.get(
+            DreoEntityConfigSpec.FAN_ENTITY_CONF, {}
+        )
+        self._speed_range = tuple(fan_config.get(DreoFeatureSpec.SPEED_RANGE, []))
+
+        self._attr_preset_modes = fan_config.get(DreoFeatureSpec.PRESET_MODES, [])
+
+    @callback
+    def _handle_coordinator_update(self):
+        """Handle updated data from the coordinator."""
+        self._update_attributes()
+        super()._handle_coordinator_update()
+
+    def _update_attributes(self):
+        """Update attributes from coordinator data."""
+        if not self.coordinator.data:
+            return
+
+        hap_data = self.coordinator.data
+        self._attr_available = hap_data.available
+        self._attr_is_on = hap_data.is_on
+
+        if not hap_data.is_on:
+            self._attr_percentage = 0
+            self._attr_preset_mode = None
+        else:
+            device_mode = getattr(hap_data, "mode", None)
+            if (
+                device_mode
+                and self._attr_preset_modes
+                and device_mode in self._attr_preset_modes
+            ):
+                self._attr_preset_mode = device_mode
+            else:
+                self._attr_preset_mode = None
+
+            manual_mode = (self._attr_preset_mode or "").lower() == "manual"
+            if (
+                manual_mode
+                and getattr(hap_data, "speed_level", None)
+                and self._speed_range
+            ):
+                min_speed, max_speed = self._speed_range
+                clamped = max(min_speed, min(max_speed, hap_data.speed_level))
+                self._attr_percentage = int((clamped / max_speed) * 100)
+            else:
+                self._attr_percentage = 0
+
+    async def async_turn_on(
+        self,
+        percentage: int | None = None,
+        preset_mode: str | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Turn the device on."""
+        await self.async_execute_hap_command(
+            DreoErrorCode.TURN_ON_FAILED, percentage=percentage, preset_mode=preset_mode
+        )
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn the device off."""
+        await self.async_send_command_and_update(
+            DreoErrorCode.TURN_OFF_FAILED, power_switch=False
+        )
+
+    async def async_set_preset_mode(self, preset_mode: str) -> None:
+        """Set the preset mode of HAP fan."""
+        await self.async_execute_hap_command(
+            DreoErrorCode.SET_PRESET_MODE_FAILED, preset_mode=preset_mode
+        )
+
+    async def async_set_percentage(self, percentage: int) -> None:
+        """Set the speed of HAP fan."""
+        if percentage <= 0:
+            await self.async_turn_off()
+            return
+
+        await self.async_execute_hap_command(
+            DreoErrorCode.SET_SPEED_FAILED, percentage=percentage
+        )
+
+    async def async_execute_hap_command(
+        self,
+        error_translation_key: str,
+        percentage: int | None = None,
+        preset_mode: str | None = None,
+    ) -> None:
+        """Execute HAP command with common parameter handling."""
+        command_params: dict[str, Any] = {}
+
+        if not self.is_on:
+            command_params[DreoDirective.POWER_SWITCH] = True
+
+        if percentage is not None and percentage > 0 and self._speed_range:
+            if (
+                preset_mode is None
+                and self._attr_preset_modes
+                and any(m.lower() == "manual" for m in self._attr_preset_modes)
+            ):
+                current_mode = (self._attr_preset_mode or "").lower()
+                if current_mode != "manual":
+                    command_params[DreoDirective.MODE] = "manual"
+
+            min_speed, max_speed = self._speed_range
+            speed_level = max(min_speed, math.ceil((percentage / 100) * max_speed))
+            command_params[DreoDirective.SPEED] = speed_level
+
+        if preset_mode is not None:
+            if self._attr_preset_modes and preset_mode not in self._attr_preset_modes:
+                _LOGGER.error("Invalid preset mode: %s", preset_mode)
+            else:
+                command_params[DreoDirective.MODE] = preset_mode
 
         await self.async_send_command_and_update(
             error_translation_key, **command_params

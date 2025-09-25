@@ -49,6 +49,12 @@
     },
     "set_follow_mode_failed": {
       "message": "Failed to set follow mode"
+    },
+    "humidity_not_supported_in_mode": {
+      "message": "Humidity control is not supported in the current mode"
+    },
+    "set_rgb_threshold_failed": {
+      "message": "Failed to set RGB humidity threshold"
     }
   }
 }

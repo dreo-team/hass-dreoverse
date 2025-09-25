@@ -6,6 +6,8 @@ import logging
 from typing import Any
 
 from homeassistant.components.climate import (
+    SWING_OFF,
+    SWING_ON,
     ClimateEntity,
     ClimateEntityFeature,
     HVACMode,
@@ -18,13 +20,11 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from . import DreoConfigEntry
 from .const import (
     DOMAIN,
-    ERROR_SET_FAN_MODE_FAILED,
-    ERROR_SET_HUMIDITY_FAILED,
-    ERROR_SET_HVAC_MODE_FAILED,
-    ERROR_SET_TEMPERATURE_FAILED,
-    ERROR_TURN_OFF_FAILED,
-    ERROR_TURN_ON_FAILED,
-    HAC_DEVICE_TYPE,
+    DreoDeviceType,
+    DreoDirective,
+    DreoEntityConfigSpec,
+    DreoErrorCode,
+    DreoFeatureSpec,
 )
 from .coordinator import DreoDataUpdateCoordinator, DreoHacDeviceData
 from .entity import DreoEntity
@@ -42,20 +42,20 @@ async def async_setup_entry(
     @callback
     def async_add_climate_entities() -> None:
         """Add climate entities."""
-        new_climates: list[DreoHacClimate] = []
+        climates: list[DreoHacClimate] = []
 
         for device in config_entry.runtime_data.devices:
             device_type = device.get("deviceType")
-            if device_type != HAC_DEVICE_TYPE:
+            if device_type != DreoDeviceType.HAC:
                 continue
 
             device_id = device.get("deviceSn")
             if not device_id:
                 continue
 
-            if Platform.CLIMATE not in device.get("config", {}).get(
-                "entitySupports", []
-            ):
+            if Platform.CLIMATE not in device.get(
+                DreoEntityConfigSpec.TOP_CONFIG, {}
+            ).get("entitySupports", []):
                 _LOGGER.warning(
                     "No climate entity support for model %s", device.get("model")
                 )
@@ -67,10 +67,10 @@ async def async_setup_entry(
                 continue
 
             climate_entity = DreoHacClimate(device, coordinator)
-            new_climates.append(climate_entity)
+            climates.append(climate_entity)
 
-        if new_climates:
-            async_add_entities(new_climates)
+        if climates:
+            async_add_entities(climates)
 
     async_add_climate_entities()
 
@@ -85,6 +85,8 @@ class DreoHacClimate(DreoEntity, ClimateEntity):
     _attr_hvac_mode = HVACMode.OFF
     _attr_fan_mode: str | None = None
     _attr_preset_mode: str | None = None
+    _attr_swing_mode: str | None = None
+    _attr_swing_modes = [SWING_OFF, SWING_ON]
 
     def __init__(
         self,
@@ -94,21 +96,29 @@ class DreoHacClimate(DreoEntity, ClimateEntity):
         """Initialize the Dreo HAC climate entity."""
         super().__init__(device, coordinator, "climate", None)
 
-        config = coordinator.model_config
+        fan_config = coordinator.model_config.get(
+            DreoEntityConfigSpec.FAN_ENTITY_CONF.value, {}
+        )
+        self._attr_preset_modes = fan_config.get(DreoFeatureSpec.PRESET_MODES, [])
+        # Enable swing feature for HAC
+        self._attr_supported_features = (
+            ClimateEntityFeature.FAN_MODE
+            | ClimateEntityFeature.TURN_ON
+            | ClimateEntityFeature.TURN_OFF
+            | ClimateEntityFeature.SWING_MODE
+        )
 
-        self._attr_preset_modes = config.get("preset_modes", [])
-
-        temp_range = config.get("temperature_range", [])
+        temp_range = fan_config.get(DreoFeatureSpec.TEMPERATURE_RANGE, [])
         if temp_range and len(temp_range) >= 2:
             self._attr_min_temp = float(temp_range[0])
             self._attr_max_temp = float(temp_range[1])
 
-        humidity_range = config.get("humidity_range", [])
+        humidity_range = fan_config.get(DreoFeatureSpec.HUMIDITY_RANGE, [])
         if humidity_range and len(humidity_range) >= 2:
             self._attr_min_humidity = float(humidity_range[0])
             self._attr_max_humidity = float(humidity_range[1])
 
-        speed_range = config.get("speed_range", [])
+        speed_range = fan_config.get(DreoFeatureSpec.SPEED_RANGE, [])
         self._speed_range = tuple(speed_range)
 
         max_speed = self._speed_range[1]
@@ -133,34 +143,39 @@ class DreoHacClimate(DreoEntity, ClimateEntity):
         hac_data = self.coordinator.data
         self._attr_available = hac_data.available
 
-        previous_hvac_mode = self._attr_hvac_mode
-
         if not hac_data.is_on:
             self._attr_hvac_mode = HVACMode.OFF
             self._attr_preset_mode = None
             self._attr_current_temperature = None
         else:
-            device_mode = hac_data.mode
             hvac_mode = hac_data.hvac_mode
-
-            if hvac_mode and hvac_mode in [mode.value for mode in HVACMode]:
-                self._attr_hvac_mode = HVACMode(hvac_mode)
-            else:
-                self._attr_hvac_mode = HVACMode.COOL
+            self._attr_hvac_mode = (
+                HVACMode(hvac_mode)
+                if hvac_mode and hvac_mode in [mode.value for mode in HVACMode]
+                else HVACMode.COOL
+            )
 
             self._attr_preset_mode = None
 
+            device_mode = hac_data.mode
             if self._attr_preset_modes and device_mode in self._attr_preset_modes:
                 self._attr_preset_mode = device_mode
                 self._attr_hvac_mode = HVACMode.COOL
 
-            if hac_data.speed_level:
-                self._attr_fan_mode = str(hac_data.speed_level)
-            else:
-                self._attr_fan_mode = "1"
+            self._attr_fan_mode = (
+                str(hac_data.speed_level) if hac_data.speed_level else "1"
+            )
 
-            if hac_data.current_temperature is not None:
-                self._attr_current_temperature = hac_data.current_temperature
+            osc = getattr(hac_data, "oscillate", None)
+            self._attr_swing_mode = (
+                None if osc is None else (SWING_ON if osc else SWING_OFF)
+            )
+
+            self._attr_current_temperature = (
+                hac_data.current_temperature
+                if hac_data.current_temperature is not None
+                else self._attr_current_temperature
+            )
 
         if hac_data.target_temperature is not None:
             self._attr_target_temperature = hac_data.target_temperature
@@ -168,27 +183,23 @@ class DreoHacClimate(DreoEntity, ClimateEntity):
         if hac_data.target_humidity is not None:
             self._attr_target_humidity = hac_data.target_humidity
 
-        if previous_hvac_mode != self._attr_hvac_mode:
-            if self._attr_hvac_mode in (HVACMode.DRY, HVACMode.COOL):
-                pass
-
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new target hvac mode."""
         if hvac_mode == HVACMode.OFF:
             await self.async_send_command_and_update(
-                ERROR_TURN_OFF_FAILED, power_switch=False
+                DreoErrorCode.TURN_OFF_FAILED, power_switch=False
             )
         else:
             command_params: dict[str, Any] = {}
 
             if not self.is_on:
-                command_params["power_switch"] = True
+                command_params[DreoDirective.POWER_SWITCH] = True
 
             if hvac_mode in self._attr_hvac_modes:
-                command_params["hvacmode"] = hvac_mode
+                command_params[DreoDirective.HVAC_MODE] = hvac_mode
 
             await self.async_send_command_and_update(
-                ERROR_SET_HVAC_MODE_FAILED, **command_params
+                DreoErrorCode.SET_HVAC_MODE_FAILED, **command_params
             )
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
@@ -200,15 +211,15 @@ class DreoHacClimate(DreoEntity, ClimateEntity):
         command_params: dict[str, Any] = {}
 
         if not self.is_on:
-            command_params["power_switch"] = True
+            command_params[DreoDirective.POWER_SWITCH] = True
 
         if self._attr_hvac_mode != HVACMode.COOL:
             raise ValueError("Preset mode can only be set in Cool mode")
 
-        command_params["mode"] = preset_mode
+        command_params[DreoDirective.MODE] = preset_mode
 
         await self.async_send_command_and_update(
-            ERROR_SET_HVAC_MODE_FAILED, **command_params
+            DreoErrorCode.SET_HVAC_MODE_FAILED, **command_params
         )
 
     async def async_set_fan_mode(self, fan_mode: str) -> None:
@@ -220,12 +231,29 @@ class DreoHacClimate(DreoEntity, ClimateEntity):
         command_params: dict[str, Any] = {}
 
         if not self.is_on:
-            command_params["power_switch"] = True
+            command_params[DreoDirective.POWER_SWITCH] = True
 
-        command_params["speed"] = int(fan_mode)
+        command_params[DreoDirective.SPEED] = int(fan_mode)
 
         await self.async_send_command_and_update(
-            ERROR_SET_FAN_MODE_FAILED, **command_params
+            DreoErrorCode.SET_FAN_MODE_FAILED, **command_params
+        )
+
+    async def async_set_swing_mode(self, swing_mode: str) -> None:
+        """Set swing (oscillation) on or off."""
+        if swing_mode not in (SWING_ON, SWING_OFF):
+            _LOGGER.error("Invalid swing mode: %s", swing_mode)
+            return
+
+        command_params: dict[str, Any] = {}
+
+        if not self.is_on:
+            command_params[DreoDirective.POWER_SWITCH] = True
+
+        command_params[DreoDirective.SWING_SWITCH] = swing_mode == SWING_ON
+
+        await self.async_send_command_and_update(
+            DreoErrorCode.SET_SWING_FAILED, **command_params
         )
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
@@ -236,48 +264,49 @@ class DreoHacClimate(DreoEntity, ClimateEntity):
 
         if self._attr_hvac_mode != HVACMode.COOL:
             raise HomeAssistantError(
-                translation_domain=DOMAIN, translation_key=ERROR_SET_TEMPERATURE_FAILED
+                translation_domain=DOMAIN,
+                translation_key=DreoErrorCode.SET_TEMPERATURE_FAILED,
             )
 
         command_params: dict[str, Any] = {}
 
         if not self.is_on:
-            command_params["power_switch"] = True
+            command_params[DreoDirective.POWER_SWITCH] = True
 
-        command_params["temperature"] = int(temperature)
+        command_params[DreoDirective.TEMPERATURE] = int(temperature)
 
         await self.async_send_command_and_update(
-            ERROR_SET_TEMPERATURE_FAILED, **command_params
+            DreoErrorCode.SET_TEMPERATURE_FAILED, **command_params
         )
 
     async def async_set_humidity(self, humidity: int) -> None:
         """Set new target humidity."""
-
         if self._attr_hvac_mode != HVACMode.DRY:
             raise HomeAssistantError(
-                translation_domain=DOMAIN, translation_key=ERROR_SET_HUMIDITY_FAILED
+                translation_domain=DOMAIN,
+                translation_key=DreoErrorCode.SET_HUMIDITY_FAILED,
             )
         command_params: dict[str, Any] = {}
 
         if not self.is_on:
-            command_params["power_switch"] = True
+            command_params[DreoDirective.POWER_SWITCH] = True
 
-        command_params["humidity"] = int(humidity)
+        command_params[DreoDirective.HUMIDITY] = int(humidity)
 
         await self.async_send_command_and_update(
-            ERROR_SET_HUMIDITY_FAILED, **command_params
+            DreoErrorCode.SET_HUMIDITY_FAILED, **command_params
         )
 
     async def async_turn_on(self) -> None:
         """Turn the device on."""
         await self.async_send_command_and_update(
-            ERROR_TURN_ON_FAILED, power_switch=True
+            DreoErrorCode.TURN_ON_FAILED, power_switch=True
         )
 
     async def async_turn_off(self) -> None:
         """Turn the device off."""
         await self.async_send_command_and_update(
-            ERROR_TURN_OFF_FAILED, power_switch=False
+            DreoErrorCode.TURN_OFF_FAILED, power_switch=False
         )
 
     @property
@@ -297,16 +326,12 @@ class DreoHacClimate(DreoEntity, ClimateEntity):
     @property
     def supported_features(self) -> ClimateEntityFeature:
         """Return the list of supported features based on current mode."""
-        base_features = (
-            ClimateEntityFeature.FAN_MODE
-            | ClimateEntityFeature.TURN_ON
-            | ClimateEntityFeature.TURN_OFF
-        )
+        base = self._attr_supported_features
 
         if self._attr_hvac_mode == HVACMode.COOL:
-            base_features |= ClimateEntityFeature.TARGET_TEMPERATURE
-            base_features |= ClimateEntityFeature.PRESET_MODE
+            base |= ClimateEntityFeature.TARGET_TEMPERATURE
+            base |= ClimateEntityFeature.PRESET_MODE
         elif self._attr_hvac_mode == HVACMode.DRY:
-            base_features |= ClimateEntityFeature.TARGET_HUMIDITY
+            base |= ClimateEntityFeature.TARGET_HUMIDITY
 
-        return base_features
+        return base

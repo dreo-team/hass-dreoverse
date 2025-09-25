@@ -2,18 +2,18 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
 from typing import Any
-
-from pydreo.client import DreoClient
-from pydreo.exceptions import DreoBusinessException, DreoException
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
+from pydreo.client import DreoClient
+from pydreo.exceptions import DreoBusinessException, DreoException
 
+from .const import DreoEntityConfigSpec
 from .coordinator import DreoDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -25,7 +25,10 @@ PLATFORMS = [
     Platform.FAN,
     Platform.HUMIDIFIER,
     Platform.LIGHT,
+    Platform.NUMBER,
     Platform.SELECT,
+    Platform.SENSOR,
+    Platform.SWITCH,
 ]
 
 
@@ -82,11 +85,10 @@ async def async_setup_device_coordinator(
     coordinators: dict[str, DreoDataUpdateCoordinator],
 ) -> None:
     """Set up coordinator for a single device."""
-
     device_model = device.get("model")
     device_id = device.get("deviceSn")
     device_type = device.get("deviceType")
-    model_config = device.get("config")
+    model_config = device.get(DreoEntityConfigSpec.TOP_CONFIG, {})
 
     if not device_id or not device_model or not device_type:
         return

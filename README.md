@@ -4,7 +4,7 @@ This is the official integration component developed and maintained by the Dreo 
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/hacs/integration)
 
-If you like Dreo products and want to support this integration, you can purchase our devices through this link: [Dreo Fans on Amazon](https://www.amazon.com/s?k=Dreo+Smart+Fan). For more information about our products, please visit our official website at [https://www.dreo.com/](https://www.dreo.com/).
+If you like Dreo products and want to support this integration, you can purchase our devices through this link: [Dreo Fans on Amazon](https://www.amazon.com/s?k=Dreo+Smart+Fan). For more information about our products, please visit our official website at [official website](https://www.dreo.com/).
 
 **Special Offer**: If you submit issues or provide valuable suggestions for our products that we adopt, we will offer you a 15% discount coupon (85% of original price) for purchases on our official website.
 
@@ -143,16 +143,16 @@ Note: If you cannot find your device name or model, please contact us.
 
 ### Manual Installation
 
-1. Copy the `dreo` directory into your `/config/custom_components` directory in your Home Assistant installation.
+1. Copy the `dreo_official` directory into your `/config/custom_components` directory in your Home Assistant installation.
 
 2. Restart your Home Assistant instance to load the integration.
 
-**Note about dependencies**: This integration has `pydreo-cloud` library as a dependency (version 0.0.6), which is specified in the manifest.json file. When you restart Home Assistant after adding the integration (including in Docker environments), the system will automatically install the required dependencies. You do not need to manually install dependencies in most cases.
+**Note about dependencies**: This integration has `pydreo-cloud` library as a dependency (version 1.0.0), which is specified in the manifest.json file. When you restart Home Assistant after adding the integration (including in Docker environments), the system will automatically install the required dependencies. You do not need to manually install dependencies in most cases.
 
 If for some reason the automatic installation fails, you can manually install the dependency:
 
 ```bash
-pip install pydreo-cloud==0.0.6
+pip install pydreo-cloud==1.0.0
 ```
 
 ## Initial Configuration
