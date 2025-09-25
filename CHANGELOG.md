@@ -11,9 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add device support: HHM (Humidifiers), HDH (Dehumidifiers), HEC (Evaporative Coolers), HAC (Air Conditioners), Circulator (HAF/HPF), Ceiling Fans (HCF)
 - pydreo-cloud: add `version` parameter to all API requests
 
-### 🔁 Compatibility
-- Rename integration folder from `dreo` to `dreo_official` to avoid conflicts with the unofficial repository and allow both to coexist ([unofficial repo](https://github.com/JeffSteinbok/hass-dreo))
-
 ### 🔧 Fixes & Improvements
 - Various bug fixes and code optimizations
 
