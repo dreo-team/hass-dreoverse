@@ -141,6 +141,20 @@ Note: If you cannot find your device name or model, please contact us.
 
 **Note**: Dreo integration is currently in the process of being added to HACS. At present, only manual installation is available.
 
+### HACS Installation
+
+You can install this integration by adding this repository as a custom repository in HACS. Here's how:
+
+1. Click the button below to download the integration from HACS:
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=dreo-team&repository=hass-dreoverse&category=integration)
+
+2. Restart your Home Assistant instance.
+
+3. Start the config flow by clicking this button:
+
+[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=dreo)
+
 ### Manual Installation
 
 1. Copy the `dreo` directory into your `/config/custom_components` directory in your Home Assistant installation.
