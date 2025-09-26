@@ -143,7 +143,7 @@ Note: If you cannot find your device name or model, please contact us.
 
 ### Manual Installation
 
-1. Copy the `dreo_official` directory into your `/config/custom_components` directory in your Home Assistant installation.
+1. Copy the `dreo` directory into your `/config/custom_components` directory in your Home Assistant installation.
 
 2. Restart your Home Assistant instance to load the integration.
 
