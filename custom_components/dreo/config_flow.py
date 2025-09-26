@@ -3,11 +3,12 @@
 import hashlib
 from typing import Any
 
-import voluptuous as vol
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
-from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from pydreo.client import DreoClient
 from pydreo.exceptions import DreoBusinessException, DreoException
+import voluptuous as vol
+
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 
 from .const import DOMAIN
 
@@ -44,6 +45,7 @@ class DreoFlowHandler(ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Handle a flow initialized by the user."""
+
         errors: dict[str, str] = {}
         if user_input:
             username = user_input[CONF_USERNAME]

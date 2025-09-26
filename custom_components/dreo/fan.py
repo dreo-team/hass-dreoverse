@@ -164,6 +164,7 @@ class DreoFan(DreoEntity, FanEntity):
 
     async def async_set_percentage(self, percentage: int) -> None:
         """Set the speed of fan."""
+
         if percentage <= 0:
             await self.async_turn_off()
             return
@@ -186,6 +187,7 @@ class DreoFan(DreoEntity, FanEntity):
         oscillate: bool | None = None,
     ) -> None:
         """Execute fan command with common parameter handling."""
+
         command_params: dict[str, Any] = {}
 
         if not self.is_on:

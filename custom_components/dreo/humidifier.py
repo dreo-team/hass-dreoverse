@@ -307,6 +307,17 @@ class DreoHumidifier(DreoEntity, HumidifierEntity):
         self._attr_available = humidifier_data.available
         self._attr_is_on = humidifier_data.is_on
 
+
+        self._set_attrs_if(
+            not self._attr_is_on or not self._attr_available,
+            self.coordinator.data,
+            {
+                "current_humidity": None,
+                "target_humidity": None,
+                "mode": None,
+            },
+        )
+
         if humidifier_data.target_humidity is not None:
             self._attr_target_humidity = int(humidifier_data.target_humidity)
 

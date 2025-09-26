@@ -31,6 +31,7 @@ class DreoFeatureSpec(StrEnum):
     HUMIDIFIER_MODE_CONFIG = "humidity_mode_config"
     DIRECTIVE_GRAPH = "directive_graph"
     DESCRIPTION_LIMITS = "description_limits"
+    AMBIENT_THRESHOLD = "ambient_threshold"
 
 
 class DreoDirective(StrEnum):
@@ -39,6 +40,7 @@ class DreoDirective(StrEnum):
     CONNECTED = "connected"
     POWER_SWITCH = "power_switch"
     AMBIENT_SWITCH = "ambient_switch"
+    AMBIENT_LIGHT_SWITCH = "ambient_light_switch"
     LIGHT_SWITCH = "light_switch"
     MODE = "mode"
     OSCILLATE = "oscillate"

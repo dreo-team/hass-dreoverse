@@ -2,17 +2,18 @@
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Callable
 from datetime import timedelta
+import logging
 from typing import Any, NoReturn
+
+from pydreo.client import DreoClient
+from pydreo.exceptions import DreoException
 
 from homeassistant.components.climate import HVACMode
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util.percentage import ranged_value_to_percentage
-from pydreo.client import DreoClient
-from pydreo.exceptions import DreoException
 
 from .const import (
     DOMAIN,
@@ -25,7 +26,6 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 UPDATE_INTERVAL = timedelta(seconds=10)
-MIN_LEN_TWO = 2
 
 
 def _set_toggle_switches_to_state(
@@ -106,6 +106,7 @@ class DreoFanDeviceData(DreoGenericDeviceData):
         state: dict[str, Any], model_config: dict[str, Any]
     ) -> DreoFanDeviceData:
         """Process fan device specific data."""
+
         fan_data = DreoFanDeviceData(
             available=state.get(DreoDirective.CONNECTED, False),
             is_on=state.get(DreoDirective.POWER_SWITCH, False),
@@ -188,6 +189,7 @@ class DreoCirculationFanDeviceData(DreoGenericDeviceData):
         state: dict[str, Any], model_config: dict[str, Any]
     ) -> DreoCirculationFanDeviceData:
         """Process circulation fan device specific data."""
+
         fan_data = DreoCirculationFanDeviceData(
             available=state.get(DreoDirective.CONNECTED, False),
             is_on=state.get(DreoDirective.POWER_SWITCH, False),
@@ -281,6 +283,7 @@ class DreoHacDeviceData(DreoGenericDeviceData):
         state: dict[str, Any], model_config: dict[str, Any]
     ) -> DreoHacDeviceData:
         """Process HAC device specific data."""
+
         hac_data = DreoHacDeviceData(
             available=state.get(DreoDirective.CONNECTED, False),
             is_on=state.get(DreoDirective.POWER_SWITCH, False),
@@ -357,6 +360,7 @@ class DreoHecDeviceData(DreoGenericDeviceData):
         state: dict[str, Any], model_config: dict[str, Any]
     ) -> DreoHecDeviceData:
         """Process HEC device specific data."""
+
         hec_data = DreoHecDeviceData(
             available=state.get(DreoDirective.CONNECTED, False),
             is_on=state.get(DreoDirective.POWER_SWITCH, False),
@@ -432,6 +436,7 @@ class DreoHapDeviceData(DreoGenericDeviceData):
         state: dict[str, Any], model_config: dict[str, Any]
     ) -> DreoHapDeviceData:
         """Process HAP device specific data."""
+
         hap_data = DreoHapDeviceData(
             available=state.get(DreoDirective.CONNECTED, False),
             is_on=state.get(DreoDirective.POWER_SWITCH, False),
@@ -496,6 +501,7 @@ class DreoDehumidifierDeviceData(DreoGenericDeviceData):
         state: dict[str, Any], model_config: dict[str, Any]
     ) -> DreoDehumidifierDeviceData:
         """Process dehumidifier device specific data."""
+
         hdh = DreoDehumidifierDeviceData(
             available=state.get(DreoDirective.CONNECTED, False),
             is_on=state.get(DreoDirective.POWER_SWITCH, False),
@@ -568,6 +574,7 @@ class DreoHumidifierDeviceData(DreoGenericDeviceData):
         state: dict[str, Any], model_config: dict[str, Any]
     ) -> DreoHumidifierDeviceData:
         """Process humidifier device specific data."""
+
         humidifier_data = DreoHumidifierDeviceData(
             available=state.get(DreoDirective.CONNECTED, False),
             is_on=state.get(DreoDirective.POWER_SWITCH, False),
@@ -663,6 +670,7 @@ class DreoCeilingFanDeviceData(DreoGenericDeviceData):
         state: dict[str, Any], model_config: dict[str, Any]
     ) -> DreoCeilingFanDeviceData:
         """Process ceiling fan device specific data."""
+
         ceiling_fan_data = DreoCeilingFanDeviceData(
             available=state.get(DreoDirective.CONNECTED, False),
             is_on=state.get(DreoDirective.POWER_SWITCH, False),

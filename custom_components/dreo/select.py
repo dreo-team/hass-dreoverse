@@ -330,6 +330,7 @@ class DreoGenericModeSelect(DreoEntity, SelectEntity):
         select_mappings: dict[str, Any],
     ) -> None:
         """Initialize the Generic Mode Select."""
+
         super().__init__(
             device, coordinator, "select", select_mappings.get("attr_name")
         )
@@ -389,6 +390,7 @@ class DreoSelectStatusDependency:
 
     def __init__(self, status_available_dependencies: list[dict[str, Any]]) -> None:
         """Initialize with dependency definitions."""
+
         self._status_available_dependencies = status_available_dependencies
 
     def __call__(self, data: DreoGenericDeviceData) -> bool:
@@ -396,8 +398,7 @@ class DreoSelectStatusDependency:
         return self.matches(data)
 
     def matches(self, data: DreoGenericDeviceData) -> bool:
-        """
-        Return True if current state matches configured dependency states.
+        """Return True if current state matches configured dependency states.
 
         Each dependency item may include:
         - directive_name: name of the field on data
@@ -406,6 +407,7 @@ class DreoSelectStatusDependency:
 
         If no valid dependency is defined, default to True (no restriction).
         """
+
         if not self._status_available_dependencies:
             return True
 
