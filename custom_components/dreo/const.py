@@ -8,6 +8,7 @@ DOMAIN = "dreo"
 class DreoEntityConfigSpec(StrEnum):
     """Dreo config keys."""
 
+    ENTITY_SUPPORTS = "entitySupports"
     TOP_CONFIG = "config"
     FAN_ENTITY_CONF = "fan_entity_config"
     LIGHT_ENTITY_CONF = "light_entity_config"
@@ -15,6 +16,9 @@ class DreoEntityConfigSpec(StrEnum):
     TOGGLE_ENTITY_CONF = "toggle_entity_config"
     SELECT_ENTITY_CONF = "select_entity_config"
     HUMIDIFIER_ENTITY_CONF = "humidifier_entity_config"
+    NUMBER_ENTITY_CONF = "number_entity_config"
+    SENSOR_ENTITY_CONF = "sensor_entity_config"
+    HEATER_ENTITY_CONF = "heater_entity_config"
 
 
 class DreoFeatureSpec(StrEnum):
@@ -32,6 +36,14 @@ class DreoFeatureSpec(StrEnum):
     DIRECTIVE_GRAPH = "directive_graph"
     DESCRIPTION_LIMITS = "description_limits"
     AMBIENT_THRESHOLD = "ambient_threshold"
+    SLIDE_COMPONENT = "slide_component"
+    STATE_ATTR_NAME = "state_attr_name"
+    DIRECTIVE_NAME = "directive_name"
+    ATTR_NAME = "attr_name"
+    ATTR_ICON = "attr_icon"
+    THRESHOLD_RANGE = "threshold_range"
+    STATUS_AVAILABLE_DEPENDENCIES = "status_available_dependencies"
+    SENSOR_CLASS = "sensor_class"
 
 
 class DreoDirective(StrEnum):
@@ -42,6 +54,8 @@ class DreoDirective(StrEnum):
     AMBIENT_SWITCH = "ambient_switch"
     AMBIENT_LIGHT_SWITCH = "ambient_light_switch"
     LIGHT_SWITCH = "light_switch"
+    HUMIDITY_SWITCH = "humidity_switch"
+    SWING_SWITCH = "swing_switch"
     MODE = "mode"
     OSCILLATE = "oscillate"
     OSCMODE = "oscmode"
@@ -49,7 +63,6 @@ class DreoDirective(StrEnum):
     LIGHTMODE = "lightmode"
     DISPLAY_MODE = "dispmode"
     HVAC_MODE = "hvacmode"
-    SWING_SWITCH = "swing_switch"
     TEMPERATURE = "temperature"
     HUMIDITY = "humidity"
     AMBIENT_RGB_MODE = "atmmode"
@@ -59,6 +72,7 @@ class DreoDirective(StrEnum):
     LIGHT_BRIGHTNESS = "brightness"
     LIGHT_COLOR_TEMP = "colortemp"
     RGB_HUMIDITY_THRESHOLD = "rgb_threshold"
+    HUMIDITY_SENSOR = "humidity_sensor"
 
 
 class DreoDeviceType(StrEnum):
@@ -73,6 +87,7 @@ class DreoDeviceType(StrEnum):
     HAP = "hap"  # Air Purifier
     HUMIDIFIER = "humidifier"  # Humidifier
     DEHUMIDIFIER = "dehumidifier"  # Dehumidifier
+    HEATER = "heater"
 
 
 CIR_FAN_SWING_ENTITY = "swing_direction"

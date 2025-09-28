@@ -1,7 +1,7 @@
 """Dreo device base entity."""
 
-from functools import partial
 import asyncio
+from functools import partial
 from typing import Any
 
 from pydreo.exceptions import (
@@ -63,6 +63,7 @@ class DreoEntity(CoordinatorEntity[DreoDataUpdateCoordinator]):
                     self.coordinator.client.update_status, self._device_id, **kwargs
                 )
             )
+
             async def _refresh_later() -> None:
                 await asyncio.sleep(0.3)
                 await self.coordinator.async_request_refresh()
@@ -87,7 +88,9 @@ class DreoEntity(CoordinatorEntity[DreoDataUpdateCoordinator]):
             if hasattr(target, name):
                 setattr(target, name, value)
 
-    def _set_attrs_if(self, condition: bool, target: Any, attrs: dict[str, Any]) -> None:
+    def _set_attrs_if(
+        self, condition: bool, target: Any, attrs: dict[str, Any]
+    ) -> None:
         """Set attributes on target if condition is true.
 
         This is a convenience wrapper around _set_attrs.

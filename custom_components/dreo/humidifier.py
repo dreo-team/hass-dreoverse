@@ -44,7 +44,7 @@ async def async_setup_entry(
     @callback
     def async_add_humidifier_entities() -> None:
         """Add humidifier entities."""
-        humidifiers: list[DreoHecHumidifier | DreoHumidifier | DreoDehumidifier] = []
+        humidifiers: list[DreoHumidifier | DreoDehumidifier] = []
 
         for device in config_entry.runtime_data.devices:
             device_type = device.get("deviceType")
@@ -83,17 +83,12 @@ async def async_setup_entry(
                 _LOGGER.error("Coordinator not found for device %s", device_id)
                 continue
 
-            if device_type == DreoDeviceType.HEC:
-                humidifier_entity: (
-                    DreoHecHumidifier | DreoHumidifier | DreoDehumidifier
-                ) = DreoHecHumidifier(device, coordinator)
-                humidifiers.append(humidifier_entity)
-            elif device_type == DreoDeviceType.HUMIDIFIER:
+            if device_type == DreoDeviceType.HUMIDIFIER:
                 humidifier_entity = DreoHumidifier(device, coordinator)
                 humidifiers.append(humidifier_entity)
             elif device_type == DreoDeviceType.DEHUMIDIFIER:
-                humidifier_entity = DreoDehumidifier(device, coordinator)
-                humidifiers.append(humidifier_entity)
+                dehumidifier_entity = DreoDehumidifier(device, coordinator)
+                humidifiers.append(dehumidifier_entity)
 
         if humidifiers:
             async_add_entities(humidifiers)
@@ -306,7 +301,6 @@ class DreoHumidifier(DreoEntity, HumidifierEntity):
         humidifier_data = self.coordinator.data
         self._attr_available = humidifier_data.available
         self._attr_is_on = humidifier_data.is_on
-
 
         self._set_attrs_if(
             not self._attr_is_on or not self._attr_available,

@@ -29,7 +29,7 @@ UPDATE_INTERVAL = timedelta(seconds=10)
 
 
 def _set_toggle_switches_to_state(
-    data_obj: Any,
+    device_data: Any,
     state: dict[str, Any],
     model_config: dict[str, Any],
 ) -> None:
@@ -39,8 +39,11 @@ def _set_toggle_switches_to_state(
     )
     for toggle_switch in toggle_switches.values():
         field = toggle_switch.get("field")
+        operable_when_off = toggle_switch.get("operable_when_off", False)
         if (val := state.get(field)) is not None:
-            setattr(data_obj, field, bool(val))
+            setattr(device_data, field, bool(val))
+        if not operable_when_off and not device_data.is_on:
+            setattr(device_data, field, False)
 
 
 def get_conf_section(
@@ -333,6 +336,7 @@ class DreoHecDeviceData(DreoGenericDeviceData):
     oscillate: bool | None = None
     target_humidity: float | None = None
     current_humidity: float | None = None
+    current_temperature: float | None = None
     model_config: dict[str, Any] | None = None
 
     def __init__(
@@ -344,6 +348,8 @@ class DreoHecDeviceData(DreoGenericDeviceData):
         speed_percentage: int | None = None,
         oscillate: bool | None = None,
         target_humidity: float | None = None,
+        current_humidity: float | None = None,
+        current_temperature: float | None = None,
         model_config: dict[str, Any] | None = None,
     ) -> None:
         """Initialize HEC device data."""
@@ -353,6 +359,8 @@ class DreoHecDeviceData(DreoGenericDeviceData):
         self.speed_percentage = speed_percentage
         self.oscillate = oscillate
         self.target_humidity = target_humidity
+        self.current_humidity = current_humidity
+        self.current_temperature = current_temperature
         self.model_config = model_config
 
     @staticmethod
@@ -387,6 +395,14 @@ class DreoHecDeviceData(DreoGenericDeviceData):
 
         if (humidity := state.get(DreoDirective.HUMIDITY)) is not None:
             hec_data.target_humidity = float(humidity)
+
+        if (humidity := state.get(DreoDirective.HUMIDITY_SENSOR)) is not None:
+            hec_data.current_humidity = float(humidity)
+
+        if (temperature := state.get(DreoDirective.TEMPERATURE)) is not None:
+            hec_data.current_temperature = float(temperature)
+
+        _set_toggle_switches_to_state(hec_data, state, model_config)
 
         return hec_data
 
@@ -517,7 +533,7 @@ class DreoDehumidifierDeviceData(DreoGenericDeviceData):
         if (rh := state.get("rh_auto")) is not None:
             hdh.target_humidity = float(rh)
 
-        if (humidity := state.get("humidity_sensor")) is not None:
+        if (humidity := state.get(DreoDirective.HUMIDITY_SENSOR)) is not None:
             hdh.current_humidity = float(humidity)
 
         if (flt := state.get("filter_threshold")) is not None:

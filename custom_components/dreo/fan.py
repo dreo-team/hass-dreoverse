@@ -201,7 +201,7 @@ class DreoFan(DreoEntity, FanEntity):
         if preset_mode is not None:
             command_params[DreoDirective.MODE] = preset_mode
         if oscillate is not None:
-            command_params["oscillate"] = oscillate
+            command_params[DreoDirective.OSCILLATE] = oscillate
 
         await self.async_send_command_and_update(
             error_translation_key, **command_params
@@ -379,7 +379,7 @@ class DreoHecFan(DreoEntity, FanEntity):
             else:
                 self._attr_preset_mode = "Normal"
 
-            self._attr_oscillating = getattr(hec_data, "oscillate", None)
+            self._attr_oscillating = getattr(hec_data, DreoDirective.OSCILLATE, None)
 
             if hec_data.speed_level and self._speed_range:
                 speed_range = self._speed_range[1] - self._speed_range[0] + 1
