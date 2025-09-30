@@ -25,7 +25,7 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-UPDATE_INTERVAL = timedelta(seconds=10)
+UPDATE_INTERVAL = timedelta(seconds=15)
 
 
 def _set_toggle_switches_to_state(
@@ -325,6 +325,86 @@ class DreoHacDeviceData(DreoGenericDeviceData):
         _set_toggle_switches_to_state(hac_data, state, model_config)
 
         return hac_data
+
+
+class DreoHeaterDeviceData(DreoGenericDeviceData):
+    """Data specific to Dreo Heater devices."""
+
+    hvac_mode: str | None = None
+    mode: str | None = None
+    target_temperature: float | None = None
+    current_temperature: float | None = None
+    heat_level: str | None = None
+    oscillate: bool | None = None
+    dispmode: bool | None = None
+    light_mode: str | None = None
+    oscangle: str | None = None
+
+    def __init__(
+        self,
+        available: bool = False,
+        is_on: bool = False,
+        hvac_mode: str | None = None,
+        mode: str | None = None,
+        target_temperature: float | None = None,
+        current_temperature: float | None = None,
+        heat_level: str | None = None,
+        oscillate: bool | None = None,
+        dispmode: bool | None = None,
+        light_mode: str | None = None,
+        oscangle: str | None = None,
+    ) -> None:
+        """Initialize Heater device data."""
+        super().__init__(available, is_on)
+        self.hvac_mode = hvac_mode
+        self.mode = mode
+        self.target_temperature = target_temperature
+        self.current_temperature = current_temperature
+        self.heat_level = heat_level
+        self.oscillate = oscillate
+        self.dispmode = dispmode
+        self.display_mode = light_mode
+        self.oscangle = oscangle
+    @staticmethod
+    def process_heater_data(
+        state: dict[str, Any], model_config: dict[str, Any]
+    ) -> DreoHeaterDeviceData:
+        """Process heater device specific data."""
+        heater_data = DreoHeaterDeviceData(
+            available=state.get(DreoDirective.CONNECTED, False),
+            is_on=state.get(DreoDirective.POWER_SWITCH, False),
+        )
+
+        if hvac_mode := state.get(DreoDirective.HVAC_MODE):
+            heater_data.hvac_mode = str(hvac_mode)
+
+        if mode := state.get(DreoDirective.MODE):
+            heater_data.mode = str(mode)
+
+        if temp := state.get(DreoDirective.TEMPERATURE):
+            heater_data.current_temperature = float(temp)
+
+        if target_temp := state.get(DreoDirective.ECOLEVEL):
+            heater_data.target_temperature = float(target_temp)
+
+        if heat_level := state.get(DreoDirective.HEAT_LEVEL):
+            heater_data.heat_level = str(heat_level)
+
+        if oscillate := state.get(DreoDirective.OSCILLATE):
+            heater_data.oscillate = bool(oscillate)
+
+        if dispmode := state.get(DreoDirective.DISPLAY_MODE):
+            heater_data.dispmode = bool(dispmode)
+
+        if light_mode := state.get(DreoDirective.LIGHTMODE):
+            heater_data.light_mode = str(light_mode)
+
+        if oscangle := state.get(DreoDirective.OSCANGLE):
+            heater_data.oscangle = str(oscangle)
+
+        _set_toggle_switches_to_state(heater_data, state, model_config)
+
+        return heater_data
 
 
 class DreoHecDeviceData(DreoGenericDeviceData):
@@ -743,6 +823,7 @@ DreoDeviceData = (
     DreoFanDeviceData
     | DreoCirculationFanDeviceData
     | DreoHacDeviceData
+    | DreoHeaterDeviceData
     | DreoHecDeviceData
     | DreoHapDeviceData
     | DreoHumidifierDeviceData
@@ -790,6 +871,8 @@ class DreoDataUpdateCoordinator(DataUpdateCoordinator[DreoDeviceData | None]):
             self.data_processor = DreoCeilingFanDeviceData.process_ceiling_fan_data
         elif self.device_type == DreoDeviceType.HAC:
             self.data_processor = DreoHacDeviceData.process_hac_data
+        elif self.device_type == DreoDeviceType.HEATER:
+            self.data_processor = DreoHeaterDeviceData.process_heater_data
         elif self.device_type == DreoDeviceType.HEC:
             self.data_processor = DreoHecDeviceData.process_hec_data
         elif self.device_type == DreoDeviceType.HAP:

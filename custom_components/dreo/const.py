@@ -25,6 +25,7 @@ class DreoFeatureSpec(StrEnum):
     """Dreo value range keys."""
 
     PRESET_MODES = "preset_modes"
+    HVAC_MODES = "hvac_modes"
     SPEED_RANGE = "speed_range"
     TEMPERATURE_RANGE = "temperature_range"
     HUMIDITY_RANGE = "humidity_range"
@@ -39,12 +40,17 @@ class DreoFeatureSpec(StrEnum):
     SLIDE_COMPONENT = "slide_component"
     STATE_ATTR_NAME = "state_attr_name"
     DIRECTIVE_NAME = "directive_name"
+    DIRECTIVE_VALUE = "directive_value"
+    HVAC_MODE_VALUE = "hvac_mode_value"
     ATTR_NAME = "attr_name"
     ATTR_ICON = "attr_icon"
     THRESHOLD_RANGE = "threshold_range"
     STATUS_AVAILABLE_DEPENDENCIES = "status_available_dependencies"
     SENSOR_CLASS = "sensor_class"
-
+    HVAC_MODE_RELATE_MAP = "hvac_mode_relate_map"
+    HVAC_MODE_REPORT = "report"
+    PRESET_MODE_CONTROL = "controls"
+    SUPPORTED_FEATURES = "supported_features"
 
 class DreoDirective(StrEnum):
     """Dreo directive keys."""
@@ -73,6 +79,9 @@ class DreoDirective(StrEnum):
     LIGHT_COLOR_TEMP = "colortemp"
     RGB_HUMIDITY_THRESHOLD = "rgb_threshold"
     HUMIDITY_SENSOR = "humidity_sensor"
+    ECOLEVEL = "ecolevel"
+    HEAT_LEVEL = "htalevel"
+    OSCANGLE = "oscangle"
 
 
 class DreoDeviceType(StrEnum):
