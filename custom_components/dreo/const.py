@@ -52,6 +52,7 @@ class DreoFeatureSpec(StrEnum):
     PRESET_MODE_CONTROL = "controls"
     SUPPORTED_FEATURES = "supported_features"
 
+
 class DreoDirective(StrEnum):
     """Dreo directive keys."""
 

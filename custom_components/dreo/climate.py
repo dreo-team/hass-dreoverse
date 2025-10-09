@@ -90,7 +90,6 @@ async def async_setup_entry(
 class DreoHacClimate(DreoEntity, ClimateEntity):
     """Dreo HAC (Air Conditioner) climate entity."""
 
-    _attr_temperature_unit = UnitOfTemperature.FAHRENHEIT
     _attr_hvac_modes = [HVACMode.OFF, HVACMode.COOL, HVACMode.DRY, HVACMode.FAN_ONLY]
     _attr_target_temperature_step = 1.0
     _attr_target_humidity_step = 5.0
@@ -113,6 +112,16 @@ class DreoHacClimate(DreoEntity, ClimateEntity):
             DreoEntityConfigSpec.FAN_ENTITY_CONF.value, {}
         )
         self._attr_preset_modes = fan_config.get(DreoFeatureSpec.PRESET_MODES, [])
+
+        # Get temperature unit from fan config, default to system unit
+        temp_unit = fan_config.get("temperature_unit")
+        if temp_unit == "celsius":
+            self._attr_temperature_unit = UnitOfTemperature.CELSIUS
+        elif temp_unit == "fahrenheit":
+            self._attr_temperature_unit = UnitOfTemperature.FAHRENHEIT
+        else:
+            # Default to system unit preference
+            self._attr_temperature_unit = coordinator.hass.config.units.temperature_unit
         # Enable swing feature for HAC
         self._attr_supported_features = (
             ClimateEntityFeature.FAN_MODE
@@ -359,7 +368,6 @@ class DreoHeaterClimate(DreoEntity, ClimateEntity):
     """Dreo Heater climate entity."""
 
     _attr_hvac_modes = [HVACMode.OFF, HVACMode.HEAT, HVACMode.FAN_ONLY]
-    _attr_temperature_unit = UnitOfTemperature.FAHRENHEIT
     _attr_target_temperature_step = 1.0
     _attr_hvac_mode = HVACMode.OFF
     _attr_preset_mode: str | None = None
@@ -373,11 +381,23 @@ class DreoHeaterClimate(DreoEntity, ClimateEntity):
         """Initialize the Dreo heater climate entity."""
         super().__init__(device, coordinator, "climate", None)
 
-        heater_config = coordinator.model_config.get(DreoEntityConfigSpec.HEATER_ENTITY_CONF, {})
+        heater_config = coordinator.model_config.get(
+            DreoEntityConfigSpec.HEATER_ENTITY_CONF, {}
+        )
         self._attr_hvac_modes = heater_config.get(DreoFeatureSpec.HVAC_MODES, [])
-        self._attr_hvac_mode_relate_map = heater_config.get(DreoFeatureSpec.HVAC_MODE_RELATE_MAP, {})
+        self._attr_hvac_mode_relate_map = heater_config.get(
+            DreoFeatureSpec.HVAC_MODE_RELATE_MAP, {}
+        )
 
         self._attr_preset_modes = heater_config.get(DreoFeatureSpec.PRESET_MODES, [])
+
+        temp_unit = heater_config.get("temperature_unit")
+        if temp_unit == "celsius":
+            self._attr_temperature_unit = UnitOfTemperature.CELSIUS
+        elif temp_unit == "fahrenheit":
+            self._attr_temperature_unit = UnitOfTemperature.FAHRENHEIT
+        else:
+            self._attr_temperature_unit = coordinator.hass.config.units.temperature_unit
 
         temp_range = heater_config.get(DreoFeatureSpec.TEMPERATURE_RANGE, [])
         if isinstance(temp_range, (list, tuple)) and len(temp_range) >= 2:
@@ -386,7 +406,6 @@ class DreoHeaterClimate(DreoEntity, ClimateEntity):
         else:
             self._attr_min_temp = 41
             self._attr_max_temp = 85
-
 
         if isinstance(coordinator.data, DreoHeaterDeviceData):
             self._attr_target_temperature = coordinator.data.target_temperature
@@ -405,29 +424,33 @@ class DreoHeaterClimate(DreoEntity, ClimateEntity):
         self._attr_available = data.available
 
         self._attr_supported_features = (
-            ClimateEntityFeature.TURN_ON
-            | ClimateEntityFeature.TURN_OFF
+            ClimateEntityFeature.TURN_ON | ClimateEntityFeature.TURN_OFF
         )
 
         if not data.is_on:
             self._attr_hvac_mode = HVACMode.OFF
             self._attr_preset_mode = None
         else:
-
             mode_config = (
                 self._attr_hvac_mode_relate_map.get(data.hvac_mode, {})
                 if self._attr_hvac_mode_relate_map and data.hvac_mode
                 else {}
             )
 
-            if supported_features := mode_config.get(DreoFeatureSpec.SUPPORTED_FEATURES, []):
+            if supported_features := mode_config.get(
+                DreoFeatureSpec.SUPPORTED_FEATURES, []
+            ):
                 for feature in supported_features:
                     self._attr_supported_features |= feature
 
             if hvac_mode_mapping := mode_config.get(DreoFeatureSpec.HVAC_MODE_REPORT):
                 if isinstance(hvac_mode_mapping, dict):
-                    self._attr_preset_mode = hvac_mode_mapping.get(DreoFeatureSpec.DIRECTIVE_VALUE)
-                    if hvac_mode_value := hvac_mode_mapping.get(DreoFeatureSpec.HVAC_MODE_VALUE):
+                    self._attr_preset_mode = hvac_mode_mapping.get(
+                        DreoFeatureSpec.DIRECTIVE_VALUE
+                    )
+                    if hvac_mode_value := hvac_mode_mapping.get(
+                        DreoFeatureSpec.HVAC_MODE_VALUE
+                    ):
                         self._attr_hvac_mode = HVACMode(hvac_mode_value)
             else:
                 self._attr_preset_mode = data.mode
@@ -438,10 +461,10 @@ class DreoHeaterClimate(DreoEntity, ClimateEntity):
                 self._attr_supported_features |= ClimateEntityFeature.PRESET_MODE
 
         self._attr_current_temperature = (
-                data.current_temperature
-                if data.current_temperature is not None
-                else self._attr_current_temperature
-            )
+            data.current_temperature
+            if data.current_temperature is not None
+            else self._attr_current_temperature
+        )
 
         if data.target_temperature is not None:
             self._attr_target_temperature = data.target_temperature
@@ -457,9 +480,7 @@ class DreoHeaterClimate(DreoEntity, ClimateEntity):
             )
         else:
             await self.async_send_command_and_update(
-                DreoErrorCode.TURN_ON_FAILED,
-                power_switch=True,
-                hvacmode=hvac_mode
+                DreoErrorCode.TURN_ON_FAILED, power_switch=True, hvacmode=hvac_mode
             )
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
@@ -470,8 +491,7 @@ class DreoHeaterClimate(DreoEntity, ClimateEntity):
         temperature = max(self._attr_min_temp, min(self._attr_max_temp, temperature))
 
         await self.async_send_command_and_update(
-            DreoErrorCode.SET_TEMPERATURE_FAILED,
-            ecolevel=int(temperature)
+            DreoErrorCode.SET_TEMPERATURE_FAILED, ecolevel=int(temperature)
         )
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
@@ -484,7 +504,9 @@ class DreoHeaterClimate(DreoEntity, ClimateEntity):
         if self._attr_hvac_mode_relate_map:
             mode_config = self._attr_hvac_mode_relate_map.get(preset_mode, {})
             if isinstance(mode_config, dict):
-                preset_mode_controls = mode_config.get(DreoFeatureSpec.PRESET_MODE_CONTROL, [])
+                preset_mode_controls = mode_config.get(
+                    DreoFeatureSpec.PRESET_MODE_CONTROL, []
+                )
         for control in preset_mode_controls:
             directive_name = control.get(DreoFeatureSpec.DIRECTIVE_NAME)
             directive_value = control.get(DreoFeatureSpec.DIRECTIVE_VALUE)
@@ -493,6 +515,5 @@ class DreoHeaterClimate(DreoEntity, ClimateEntity):
 
         if command_dict:
             await self.async_send_command_and_update(
-                DreoErrorCode.SET_PRESET_MODE_FAILED,
-                **command_dict
+                DreoErrorCode.SET_PRESET_MODE_FAILED, **command_dict
             )

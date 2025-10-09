@@ -76,6 +76,15 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: DreoConfigEntry) 
     config_entry.runtime_data = DreoData(client, devices, coordinators)
 
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
+
+    for coordinator in coordinators.values():
+        if coordinator.data is not None:
+            _LOGGER.debug(
+                "Triggering state update for device %s after entity creation",
+                coordinator.device_id,
+            )
+            coordinator.async_update_listeners()
+
     return True
 
 
@@ -91,6 +100,7 @@ async def async_setup_device_coordinator(
     device_id = device.get("deviceSn")
     device_type = device.get("deviceType")
     model_config = device.get(DreoEntityConfigSpec.TOP_CONFIG, {})
+    initial_state = device.get("state")
 
     if not device_id or not device_model or not device_type:
         return
@@ -109,7 +119,22 @@ async def async_setup_device_coordinator(
     if coordinator.data_processor is None:
         return
 
-    await coordinator.async_config_entry_first_refresh()
+    if initial_state:
+        _LOGGER.debug("Using initial state from device list for %s", device_id)
+        try:
+            processed_data = coordinator.data_processor(initial_state, model_config)
+            coordinator.async_set_updated_data(processed_data)
+            _LOGGER.debug("Initial state set for %s", device_id)
+        except (ValueError, KeyError, TypeError) as ex:
+            _LOGGER.warning(
+                "Failed to process initial state for %s: %s; will fetch fresh",
+                device_id,
+                ex,
+            )
+            await coordinator.async_request_refresh()
+    else:
+        await coordinator.async_config_entry_first_refresh()
+
     coordinators[device_id] = coordinator
 
 

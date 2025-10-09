@@ -365,6 +365,7 @@ class DreoHeaterDeviceData(DreoGenericDeviceData):
         self.dispmode = dispmode
         self.display_mode = light_mode
         self.oscangle = oscangle
+
     @staticmethod
     def process_heater_data(
         state: dict[str, Any], model_config: dict[str, Any]
