@@ -38,7 +38,8 @@ We welcome enthusiasts and hobbyists who are interested in contributing to the D
 
 ## Compatibility
 
-Currently supported device models are listed below.
+Currently supported device models are listed below. Nearly every Dreo model has been integrated; only the `KCM001` and `KCM002` devices remain unsupported at this time.
+> **Note:** The tables below highlight representative models for each category and are not exhaustive—additional supported models exist beyond those listed.
 
 ### Supported Products
 
