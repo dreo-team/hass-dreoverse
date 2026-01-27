@@ -45,12 +45,17 @@ class DreoFeatureSpec(StrEnum):
     ATTR_NAME = "attr_name"
     ATTR_ICON = "attr_icon"
     THRESHOLD_RANGE = "threshold_range"
+    DATA_RANGE = "data_range"
     STATUS_AVAILABLE_DEPENDENCIES = "status_available_dependencies"
+    AMBIENT_STATUS_AVAILABLE_DEPENDENCIES = "ambient_status_available_dependencies"
     SENSOR_CLASS = "sensor_class"
     HVAC_MODE_RELATE_MAP = "hvac_mode_relate_map"
     HVAC_MODE_REPORT = "report"
     PRESET_MODE_CONTROL = "controls"
     SUPPORTED_FEATURES = "supported_features"
+    FIXED_ANGLE = "fixed_angle"
+    OSCRANGE = "oscrange"
+    SENSOR_UNIT = "sensor_unit"
 
 
 class DreoDirective(StrEnum):
@@ -83,6 +88,21 @@ class DreoDirective(StrEnum):
     ECOLEVEL = "ecolevel"
     HEAT_LEVEL = "htalevel"
     OSCANGLE = "oscangle"
+    HUMIDITY_MODE = "humidity_mode"
+    FOGLEVEL = "foglevel"
+    MAIN_SWITCH = "main_switch"
+    FIXED_ANGLE = "fixed_angle"
+    OSCRANGE = "oscrange"
+    HFIXEDANGLE = "hfixedangle"
+    VFIXEDANGLE = "vfixedangle"
+    HOSCRANGE = "hoscrange"
+    VOSCRANGE = "voscrange"
+    HFIXED_ANGLE_RANGE = "hfixed_angle_range"
+    VFIXED_ANGLE_RANGE = "vfixed_angle_range"
+    HWFPANGLE = "hwfpangle"
+    RGB_BREATH_SPEED = "rgb_breath_speed"
+    RGB_CYCLE_SPEED = "rgb_cycle_speed"
+    TEMP_UNITS = "temp_units"
 
 
 class DreoDeviceType(StrEnum):
@@ -127,3 +147,4 @@ class DreoErrorCode(StrEnum):
     SET_HUMIDIFIER_HUMIDITY_FAILED = "set_humidifier_humidity_failed"
     HUMIDITY_NOT_SUPPORTED_IN_MODE = "humidity_not_supported_in_mode"
     SET_RGB_THRESHOLD_FAILED = "set_rgb_threshold_failed"
+    SET_FIXED_ANGLE_FAILED = "set_fixed_angle_failed"

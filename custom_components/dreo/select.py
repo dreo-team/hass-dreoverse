@@ -251,3 +251,13 @@ class DreoGenericModeSelect(DreoEntity, SelectEntity):
         await self.async_send_command_and_update(
             DreoErrorCode.SET_SWING_FAILED, **command_params
         )
+
+    @property
+    def available(self) -> bool:
+        """Entity is available based on status dependency configuration."""
+        if not super().available:
+            return False
+        data = self.coordinator.data
+        if not data:
+            return False
+        return self._status_dependency(data)

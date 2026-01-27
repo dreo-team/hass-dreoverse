@@ -190,7 +190,7 @@ class DreoFan(DreoEntity, FanEntity):
 
         command_params: dict[str, Any] = {}
 
-        if not self.is_on:
+        if not self._attr_is_on:
             command_params[DreoDirective.POWER_SWITCH] = True
 
         if percentage is not None and percentage > 0 and self._speed_range:
@@ -302,7 +302,7 @@ class DreoCirculationFan(DreoEntity, FanEntity):
         """Execute circulation fan command with parameter handling."""
         command_params: dict[str, Any] = {}
 
-        if not self.is_on:
+        if not self._attr_is_on:
             command_params[DreoDirective.POWER_SWITCH] = True
 
         if percentage is not None and percentage > 0 and self._speed_range:
@@ -483,7 +483,7 @@ class DreoHecFan(DreoEntity, FanEntity):
 
         command_params: dict[str, Any] = {}
 
-        if not self.is_on:
+        if not self._attr_is_on:
             command_params[DreoDirective.POWER_SWITCH] = True
 
         command_params["humidity"] = int(humidity)
@@ -502,7 +502,7 @@ class DreoHecFan(DreoEntity, FanEntity):
         """Execute HEC command with common parameter handling."""
         command_params: dict[str, Any] = {}
 
-        if not self.is_on:
+        if not self._attr_is_on:
             command_params[DreoDirective.POWER_SWITCH] = True
 
         if percentage is not None and percentage > 0 and self._speed_range:
@@ -623,7 +623,7 @@ class DreoCeilingFan(DreoEntity, FanEntity):
         """Execute ceiling fan command with common parameter handling."""
         command_params: dict[str, Any] = {}
 
-        if not self.is_on:
+        if not self._attr_is_on:
             command_params[DreoDirective.POWER_SWITCH] = True
 
         if percentage is not None and percentage > 0 and self._speed_range:
@@ -751,7 +751,7 @@ class DreoHapFan(DreoEntity, FanEntity):
         """Execute HAP command with common parameter handling."""
         command_params: dict[str, Any] = {}
 
-        if not self.is_on:
+        if not self._attr_is_on:
             command_params[DreoDirective.POWER_SWITCH] = True
 
         if percentage is not None and percentage > 0 and self._speed_range:

@@ -6,9 +6,10 @@ import logging
 from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
-from homeassistant.const import PERCENTAGE, Platform
+from homeassistant.const import PERCENTAGE, Platform, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.typing import UNDEFINED
 
 from . import DreoConfigEntry
 from .const import DreoEntityConfigSpec, DreoFeatureSpec
@@ -89,7 +90,57 @@ class DreoGenericSensor(DreoEntity, SensorEntity):
         if icon:
             self._attr_icon = icon
 
-        self._attr_device_class = config.get(DreoFeatureSpec.SENSOR_CLASS, sensor_type)
+        sensor_class = config.get(DreoFeatureSpec.SENSOR_CLASS, sensor_type)
+        # Convert string to SensorDeviceClass enum if needed
+        if isinstance(sensor_class, str):
+            try:
+                self._attr_device_class = SensorDeviceClass(sensor_class)
+            except ValueError:
+                self._attr_device_class = None
+        else:
+            self._attr_device_class = sensor_class
+
+        # Get sensor_unit from config, default to None
+        sensor_unit = config.get(DreoFeatureSpec.SENSOR_UNIT)
+        if sensor_unit == "celsius":
+            self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
+        elif sensor_unit == "fahrenheit":
+            self._attr_native_unit_of_measurement = UnitOfTemperature.FAHRENHEIT
+        elif self._attr_device_class == SensorDeviceClass.TEMPERATURE:
+            # For temperature sensors without explicit unit, use system unit
+            self._attr_native_unit_of_measurement = (
+                self.coordinator.hass.config.units.temperature_unit
+            )
+        else:
+            self._attr_native_unit_of_measurement = None
+
+        # For temperature sensors, don't set suggested_unit_of_measurement
+        # to allow Home Assistant's automatic temperature conversion to work
+        if self._attr_device_class == SensorDeviceClass.TEMPERATURE:
+            self._attr_suggested_unit_of_measurement = None
+
+    def get_initial_entity_options(self):
+        """Return initial entity options.
+
+        For temperature sensors, return None to prevent storing suggested_unit_of_measurement,
+        allowing Home Assistant's automatic temperature conversion to work.
+        """
+        if self._attr_device_class == SensorDeviceClass.TEMPERATURE:
+            return None
+        return super().get_initial_entity_options()
+
+    @callback
+    def _async_read_entity_options(self) -> None:
+        """Read entity options from entity registry.
+
+        For temperature sensors, clear _sensor_option_unit_of_measurement to allow
+        Home Assistant's automatic temperature conversion to work.
+        """
+        super()._async_read_entity_options()
+        # For temperature sensors, clear _sensor_option_unit_of_measurement
+        # to allow automatic temperature conversion
+        if self._attr_device_class == SensorDeviceClass.TEMPERATURE:
+            self._sensor_option_unit_of_measurement = UNDEFINED
 
     @callback
     def _handle_coordinator_update(self) -> None:

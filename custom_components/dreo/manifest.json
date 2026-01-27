@@ -9,5 +9,5 @@
   "iot_class": "cloud_polling",
   "quality_scale": "bronze",
   "requirements": ["pydreo-cloud==1.0.0"],
-  "version": "2.1.4"
+  "version": "2.2.0"
 }

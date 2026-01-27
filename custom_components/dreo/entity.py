@@ -1,6 +1,5 @@
 """Dreo device base entity."""
 
-import asyncio
 from functools import partial
 from typing import Any
 
@@ -64,11 +63,7 @@ class DreoEntity(CoordinatorEntity[DreoDataUpdateCoordinator]):
                 )
             )
 
-            async def _refresh_later() -> None:
-                await asyncio.sleep(0.3)
-                await self.coordinator.async_request_refresh()
-
-            self.coordinator.hass.async_create_task(_refresh_later())
+            await self.coordinator.async_refresh()
         except (
             DreoException,
             DreoBusinessException,

@@ -44,7 +44,7 @@ async def async_setup_entry(
     @callback
     def async_add_humidifier_entities() -> None:
         """Add humidifier entities."""
-        humidifiers: list[DreoHumidifier | DreoDehumidifier] = []
+        humidifiers: list[DreoHumidifier | DreoDehumidifier | DreoHecHumidifier] = []
 
         for device in config_entry.runtime_data.devices:
             device_type = device.get("deviceType")
@@ -89,6 +89,9 @@ async def async_setup_entry(
             elif device_type == DreoDeviceType.DEHUMIDIFIER:
                 dehumidifier_entity = DreoDehumidifier(device, coordinator)
                 humidifiers.append(dehumidifier_entity)
+            elif device_type == DreoDeviceType.HEC:
+                hec_humidifier_entity = DreoHecHumidifier(device, coordinator)
+                humidifiers.append(hec_humidifier_entity)
 
         if humidifiers:
             async_add_entities(humidifiers)
@@ -115,14 +118,17 @@ class DreoHecHumidifier(DreoEntity, HumidifierEntity):
         super().__init__(device, coordinator, "humidifier", "Humidifier")
 
         model_config = coordinator.model_config
+        humidifier_config = model_config.get(
+            DreoEntityConfigSpec.HUMIDIFIER_ENTITY_CONF, {}
+        )
 
-        humidity_range = model_config.get(DreoFeatureSpec.HUMIDITY_RANGE)
+        humidity_range = humidifier_config.get(DreoFeatureSpec.HUMIDITY_RANGE)
         if humidity_range and len(humidity_range) >= 2:
             self._attr_min_humidity = int(humidity_range[0])
             self._attr_max_humidity = int(humidity_range[1])
 
         self._attr_available_modes = (
-            model_config.get(DreoFeatureSpec.PRESET_MODES) or []
+            humidifier_config.get(DreoFeatureSpec.PRESET_MODES) or []
         )
 
     @callback
@@ -141,19 +147,24 @@ class DreoHecHumidifier(DreoEntity, HumidifierEntity):
 
         hec_data = self.coordinator.data
         self._attr_available = hec_data.available
-        self._attr_is_on = hec_data.is_on
+        self._attr_is_on = (
+            hec_data.humidity_switch if hec_data.humidity_switch is not None else False
+        )
+
+        if hec_data.humidity_mode is not None:
+            self._attr_mode = hec_data.humidity_mode
 
         if hec_data.target_humidity is not None:
             self._attr_target_humidity = int(hec_data.target_humidity)
 
-        if (
-            hec_data.mode
-            and self._attr_available_modes
-            and hec_data.mode in self._attr_available_modes
-        ):
-            self._attr_mode = hec_data.mode
-        else:
-            self._attr_mode = "Normal"
+        # if (
+        #     hec_data.humidity_mode
+        #     and self._attr_available_modes
+        #     and hec_data.humidity_mode in self._attr_available_modes
+        # ):
+        #     self._attr_mode = hec_data.humidity_mode
+        # else:
+        #     self._attr_mode = "Normal"
 
     @property
     def is_on(self) -> bool:
@@ -175,13 +186,13 @@ class DreoHecHumidifier(DreoEntity, HumidifierEntity):
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the humidifier on."""
         await self.async_send_command_and_update(
-            DreoErrorCode.TURN_ON_FAILED, power_switch=True
+            DreoErrorCode.TURN_ON_FAILED, humidity_switch=True
         )
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the humidifier off."""
         await self.async_send_command_and_update(
-            DreoErrorCode.TURN_OFF_FAILED, power_switch=False
+            DreoErrorCode.TURN_OFF_FAILED, humidity_switch=False
         )
 
     async def async_set_humidity(self, humidity: int) -> None:
@@ -198,7 +209,7 @@ class DreoHecHumidifier(DreoEntity, HumidifierEntity):
         command_params: dict[str, Any] = {}
 
         if not self.is_on:
-            command_params[DreoDirective.POWER_SWITCH] = True
+            command_params[DreoDirective.HUMIDITY_SWITCH] = True
 
         command_params[DreoDirective.HUMIDITY] = int(humidity)
 
@@ -215,9 +226,9 @@ class DreoHecHumidifier(DreoEntity, HumidifierEntity):
         command_params: dict[str, Any] = {}
 
         if not self.is_on:
-            command_params[DreoDirective.POWER_SWITCH] = True
+            command_params[DreoDirective.HUMIDITY_SWITCH] = True
 
-        command_params[DreoDirective.MODE] = mode.capitalize()
+        command_params[DreoDirective.HUMIDITY_MODE] = mode.capitalize()
 
         await self.async_send_command_and_update(
             DreoErrorCode.SET_HUMIDIFIER_MODE_FAILED, **command_params
