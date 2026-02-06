@@ -1,42 +1,30 @@
 {
   "config": {
-    "step": {
-      "user": {
-        "title": "Connect to Dreo",
-        "description": "Please enter your Dreo credentials",
-        "data": {
-          "username": "[%key:common::config_flow::data::email%]",
-          "password": "[%key:common::config_flow::data::password%]"
-        }
-      }
+    "abort": {
+      "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]"
     },
     "error": {
       "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
       "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
       "unknown": "[%key:common::config_flow::error::unknown%]"
     },
-    "abort": {
-      "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]"
+    "step": {
+      "user": {
+        "data": {
+          "password": "[%key:common::config_flow::data::password%]",
+          "username": "[%key:common::config_flow::data::email%]"
+        },
+        "description": "Please enter your Dreo credentials",
+        "title": "Connect to Dreo"
+      }
     }
   },
   "exceptions": {
-    "turn_on_failed": {
-      "message": "Failed to turn on the device"
+    "humidity_not_supported_in_mode": {
+      "message": "Humidity control is not supported in the current mode"
     },
-    "turn_off_failed": {
-      "message": "Failed to turn off the device"
-    },
-    "set_preset_mode_failed": {
-      "message": "Failed to set preset mode"
-    },
-    "set_speed_failed": {
-      "message": "Failed to set fan speed"
-    },
-    "set_oscillate_failed": {
-      "message": "Failed to set oscillation"
-    },
-    "set_humidity_failed": {
-      "message": "Humidity can only be set in Dry mode"
+    "set_follow_mode_failed": {
+      "message": "Failed to set follow mode"
     },
     "set_hec_humidity_failed": {
       "message": "Failed to set humidity"
@@ -44,17 +32,29 @@
     "set_humidifier_mode_failed": {
       "message": "Failed to set humidifier mode"
     },
-    "set_temperature_failed": {
-      "message": "Temperature can only be set in Cool mode"
+    "set_humidity_failed": {
+      "message": "Humidity can only be set in Dry mode"
     },
-    "set_follow_mode_failed": {
-      "message": "Failed to set follow mode"
+    "set_oscillate_failed": {
+      "message": "Failed to set oscillation"
     },
-    "humidity_not_supported_in_mode": {
-      "message": "Humidity control is not supported in the current mode"
+    "set_preset_mode_failed": {
+      "message": "Failed to set preset mode"
     },
     "set_rgb_threshold_failed": {
       "message": "Failed to set RGB humidity threshold"
+    },
+    "set_speed_failed": {
+      "message": "Failed to set fan speed"
+    },
+    "set_temperature_failed": {
+      "message": "Temperature can only be set in Cool mode"
+    },
+    "turn_off_failed": {
+      "message": "Failed to turn off the device"
+    },
+    "turn_on_failed": {
+      "message": "Failed to turn on the device"
     }
   }
 }

@@ -1,5 +1,5 @@
 {
-    "name": "Official Dreo Devices for Home Assistant",
     "homeassistant": "2024.8.0",
+    "name": "Official Dreo Devices for Home Assistant",
     "render_readme": true
 }
