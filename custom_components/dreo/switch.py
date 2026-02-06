@@ -161,10 +161,10 @@ class DreoToggleSwitch(DreoEntity, SwitchEntity):
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the switch off."""
-
         if not self._is_ui_available():
             _LOGGER.debug(
-                "Ignoring turn_off for %s because device is unavailable or power policy blocks it",
+                "Ignoring turn_off for %s because device is unavailable or "
+                "power policy blocks it",
                 self.entity_id,
             )
             return
@@ -175,7 +175,6 @@ class DreoToggleSwitch(DreoEntity, SwitchEntity):
     @property
     def icon(self) -> str | None:
         """Return a more distinctive icon per switch and state."""
-
         is_on = getattr(self, "_attr_is_on", False)
         if self._field == "led_switch":
             return "mdi:led-on" if is_on else "mdi:led-off"
