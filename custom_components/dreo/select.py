@@ -200,7 +200,6 @@ class DreoGenericModeSelect(DreoEntity, SelectEntity):
         select_mappings: dict[str, Any],
     ) -> None:
         """Initialize the Generic Mode Select."""
-
         super().__init__(
             device, coordinator, "select", select_mappings.get("attr_name")
         )

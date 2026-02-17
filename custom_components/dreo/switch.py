@@ -112,7 +112,6 @@ class DreoToggleSwitch(DreoEntity, SwitchEntity):
         data: DreoToggleSwitchData,
     ) -> None:
         """Initialize the toggle switch entity for a given HAP device field."""
-
         super().__init__(device, coordinator, "switch", data.name)
         self._field = data.field
         self._error_key = data.error_key
@@ -121,7 +120,6 @@ class DreoToggleSwitch(DreoEntity, SwitchEntity):
 
     def _is_ui_available(self) -> bool:
         """Return if UI should allow interaction for this switch."""
-
         base_available = super().available
         data = getattr(self.coordinator, "data", None)
         if not data:
@@ -143,14 +141,12 @@ class DreoToggleSwitch(DreoEntity, SwitchEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updates from the coordinator to refresh on/off state."""
-
         state = bool(getattr(self.coordinator.data, self._field, True))
         self._attr_is_on = bool(state) if state is not None else False
         super()._handle_coordinator_update()
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the switch on."""
-
         if not self._is_ui_available():
             _LOGGER.debug(
                 "Ignoring turn_on for %s because device is unavailable or power policy blocks it",

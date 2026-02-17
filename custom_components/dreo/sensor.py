@@ -120,7 +120,8 @@ class DreoGenericSensor(DreoEntity, SensorEntity):
             self._attr_suggested_unit_of_measurement = None
 
     def get_initial_entity_options(self):
-        """Return initial entity options.
+        """
+        Return initial entity options.
 
         For temperature sensors, return None to prevent storing suggested_unit_of_measurement,
         allowing Home Assistant's automatic temperature conversion to work.
@@ -131,7 +132,8 @@ class DreoGenericSensor(DreoEntity, SensorEntity):
 
     @callback
     def _async_read_entity_options(self) -> None:
-        """Read entity options from entity registry.
+        """
+        Read entity options from entity registry.
 
         For temperature sensors, clear _sensor_option_unit_of_measurement to allow
         Home Assistant's automatic temperature conversion to work.

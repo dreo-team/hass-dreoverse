@@ -105,7 +105,6 @@ class DreoHacClimate(DreoEntity, ClimateEntity):
         coordinator: DreoDataUpdateCoordinator,
     ) -> None:
         """Initialize the Dreo HAC climate entity."""
-
         super().__init__(device, coordinator, "climate", None)
 
         fan_config = coordinator.model_config.get(
@@ -151,13 +150,11 @@ class DreoHacClimate(DreoEntity, ClimateEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-
         self._update_attributes()
         super()._handle_coordinator_update()
 
     def _update_attributes(self) -> None:
         """Update attributes from coordinator data."""
-
         if not self.coordinator.data:
             return
 
@@ -209,7 +206,6 @@ class DreoHacClimate(DreoEntity, ClimateEntity):
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new target hvac mode."""
-
         if hvac_mode == HVACMode.OFF:
             await self.async_send_command_and_update(
                 DreoErrorCode.TURN_OFF_FAILED, power_switch=False
@@ -229,7 +225,6 @@ class DreoHacClimate(DreoEntity, ClimateEntity):
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
-
         if self._attr_preset_modes and preset_mode not in self._attr_preset_modes:
             _LOGGER.error("Invalid preset mode: %s", preset_mode)
             return
@@ -307,7 +302,6 @@ class DreoHacClimate(DreoEntity, ClimateEntity):
 
     async def async_set_humidity(self, humidity: int) -> None:
         """Set new target humidity."""
-
         if self._attr_hvac_mode != HVACMode.DRY:
             raise HomeAssistantError(
                 translation_domain=DOMAIN,

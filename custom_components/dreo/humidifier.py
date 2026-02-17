@@ -102,7 +102,6 @@ async def async_setup_entry(
 class DreoHecHumidifier(DreoEntity, HumidifierEntity):
     """Dreo HEC (Hybrid Evaporative Cooler) humidifier entity."""
 
-    _attr_supported_features = HumidifierEntityFeature.MODES
     _attr_is_on = False
     _attr_mode: str | None = None
     _attr_current_humidity: int | None = None
@@ -130,6 +129,13 @@ class DreoHecHumidifier(DreoEntity, HumidifierEntity):
         self._attr_available_modes = (
             humidifier_config.get(DreoFeatureSpec.PRESET_MODES) or []
         )
+
+    @property
+    def supported_features(self) -> HumidifierEntityFeature:
+        """Return supported features based on device config."""
+        if self._attr_available_modes:
+            return HumidifierEntityFeature.MODES
+        return HumidifierEntityFeature(0)
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -238,7 +244,6 @@ class DreoHecHumidifier(DreoEntity, HumidifierEntity):
 class DreoHumidifier(DreoEntity, HumidifierEntity):
     """Dreo Humidifier entity for dedicated humidifier devices like HHM001S."""
 
-    _attr_supported_features = HumidifierEntityFeature.MODES
     _attr_is_on = False
     _attr_mode: str | None = None
     _attr_current_humidity: int | None = None
@@ -294,6 +299,13 @@ class DreoHumidifier(DreoEntity, HumidifierEntity):
             ]
         else:
             self._attr_fog_level_range = [1, 6]
+
+    @property
+    def supported_features(self) -> HumidifierEntityFeature:
+        """Return supported features based on device config."""
+        if self._attr_available_modes:
+            return HumidifierEntityFeature.MODES
+        return HumidifierEntityFeature(0)
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -442,7 +454,6 @@ class DreoHumidifier(DreoEntity, HumidifierEntity):
 class DreoDehumidifier(DreoEntity, HumidifierEntity):
     """Expose target humidity adjustment for HDH devices in Auto/Custom."""
 
-    _attr_supported_features = HumidifierEntityFeature.MODES
     _attr_is_on = False
     _attr_mode: str | None = None
     _attr_current_humidity: int | None = None
@@ -482,6 +493,13 @@ class DreoDehumidifier(DreoEntity, HumidifierEntity):
         self._attr_description_limits = humidifier_config.get(
             DreoFeatureSpec.DESCRIPTION_LIMITS, {}
         )
+
+    @property
+    def supported_features(self) -> HumidifierEntityFeature:
+        """Return supported features based on device config."""
+        if self._attr_available_modes:
+            return HumidifierEntityFeature.MODES
+        return HumidifierEntityFeature(0)
 
     @callback
     def _handle_coordinator_update(self) -> None:

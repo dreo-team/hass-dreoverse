@@ -6,7 +6,7 @@
   "dependencies": ["logger"],
   "documentation": "https://github.com/dreo-team/hass-dreoverse/blob/master/README.md",
   "integration_type": "hub",
-  "iot_class": "cloud_polling",
+  "iot_class": "cloud_push",
   "issue_tracker": "https://github.com/dreo-team/hass-dreoverse/issues",
   "quality_scale": "bronze",
   "requirements": ["pydreo-cloud==1.0.0"],

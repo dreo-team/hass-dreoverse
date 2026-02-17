@@ -3,16 +3,15 @@
 from functools import partial
 from typing import Any
 
+from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from pydreo.exceptions import (
     DreoAccessDeniedException,
     DreoBusinessException,
     DreoException,
     DreoFlowControlException,
 )
-
-from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import DreoDataUpdateCoordinator
@@ -31,7 +30,6 @@ class DreoEntity(CoordinatorEntity[DreoDataUpdateCoordinator]):
         name: str | None = None,
     ) -> None:
         """Initialize the Dreo entity."""
-
         super().__init__(coordinator)
         self._device_id = device.get("deviceSn")
         self._model = device.get("model")
@@ -55,7 +53,6 @@ class DreoEntity(CoordinatorEntity[DreoDataUpdateCoordinator]):
         self, error_translation_key: str, **kwargs: Any
     ) -> None:
         """Call a device command handling error messages and update entity state."""
-
         try:
             await self.coordinator.hass.async_add_executor_job(
                 partial(
@@ -75,7 +72,8 @@ class DreoEntity(CoordinatorEntity[DreoDataUpdateCoordinator]):
             ) from ex
 
     def _set_attrs(self, target: Any, attrs: dict[str, Any]) -> None:
-        """Safely set multiple attributes on a target object.
+        """
+        Safely set multiple attributes on a target object.
 
         Only sets attributes that exist on the target to avoid AttributeError.
         """
@@ -86,7 +84,8 @@ class DreoEntity(CoordinatorEntity[DreoDataUpdateCoordinator]):
     def _set_attrs_if(
         self, condition: bool, target: Any, attrs: dict[str, Any]
     ) -> None:
-        """Set attributes on target if condition is true.
+        """
+        Set attributes on target if condition is true.
 
         This is a convenience wrapper around _set_attrs.
         """

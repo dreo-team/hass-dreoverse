@@ -129,7 +129,6 @@ class DreoRGBLight(DreoEntity, LightEntity):
         coordinator: DreoDataUpdateCoordinator,
     ) -> None:
         """Initialize the Dreo circulation fan RGB light."""
-
         super().__init__(device, coordinator, "light", "RGB Light")
 
         device_id = device.get("deviceSn")
@@ -294,7 +293,6 @@ class DreoRGBLight(DreoEntity, LightEntity):
 
     async def async_set_light_speed(self, speed: int) -> None:
         """Set the light animation speed (for Circle and Breath modes)."""
-
         rgb_mode = None
         if self.coordinator.data and _has_rgb_features(self.coordinator.data):
             rgb_mode = getattr(self.coordinator.data, "rgb_mode", None)
