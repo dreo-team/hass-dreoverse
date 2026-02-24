@@ -12,6 +12,7 @@ __pycache__
 coverage.xml
 .ruff_cache
 .env
+custom_components/dreo/hass-dreoverse.code-workspace
 
 
 # Home Assistant configuration
