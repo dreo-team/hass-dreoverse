@@ -4,17 +4,23 @@ set -e
 
 cd "$(dirname "$0")/.."
 
+# Check if Home Assistant is installed
+if ! python3 -c "import homeassistant" 2>/dev/null; then
+    echo "Home Assistant is not installed. Installing..."
+    python3 -m pip install homeassistant
+fi
+
 # Create config dir if not present
 if [[ ! -d "${PWD}/config" ]]; then
     mkdir -p "${PWD}/config"
-    hass --config "${PWD}/config" --script ensure_config
+    python3 -m homeassistant --config "${PWD}/config" --script ensure_config
 fi
 
 # Set the path to custom_components
-## This let's us have the structure we want <root>/custom_components/integration_blueprint
+## This let's us have the structure we want <root>/custom_components/dreo
 ## while at the same time have Home Assistant configuration inside <root>/config
 ## without resulting to symlinks.
 export PYTHONPATH="${PYTHONPATH}:${PWD}/custom_components"
 
 # Start Home Assistant
-hass --config "${PWD}/config" --debug
+python3 -m homeassistant --config "${PWD}/config" --debug

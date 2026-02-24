@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import DreoConfigEntry
+if TYPE_CHECKING:
+    from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+
+    from . import DreoConfigEntry
 from .const import DreoDirective, DreoEntityConfigSpec, DreoErrorCode, DreoFeatureSpec
 from .coordinator import (
     DreoCeilingFanDeviceData,
@@ -27,7 +29,7 @@ _LOGGER = logging.getLogger(__name__)
 def _has_rgb_features(device_data: DreoGenericDeviceData) -> bool:
     """Check if device data has RGB features."""
     return isinstance(
-        device_data, (DreoCirculationFanDeviceData, DreoCeilingFanDeviceData)
+        device_data, DreoCirculationFanDeviceData | DreoCeilingFanDeviceData
     )
 
 
@@ -35,7 +37,7 @@ ALLOWED_SELECT_CLASSES: set[str] = {"DreoGenericModeSelect", "DreoRgbSpeedSelect
 
 
 async def async_setup_entry(
-    hass: HomeAssistant,
+    _hass: HomeAssistant,
     config_entry: DreoConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
@@ -58,7 +60,10 @@ async def async_setup_entry(
             ).get("entitySupports", [])
             if not has_select_support:
                 _LOGGER.debug(
-                    "Model %s does not advertise select support; will infer from capabilities",
+                    (
+                        "Model %s does not advertise select support; "
+                        "will infer from capabilities"
+                    ),
                     device.get("model"),
                 )
 
@@ -71,7 +76,10 @@ async def async_setup_entry(
             entity_supports = config.get("entitySupports", [])
             if Platform.SELECT not in entity_supports:
                 _LOGGER.warning(
-                    "Model %s does not advertise select support; will infer from capabilities",
+                    (
+                        "Model %s does not advertise select support; "
+                        "will infer from capabilities"
+                    ),
                     device.get("model"),
                 )
 
@@ -99,7 +107,7 @@ async def async_setup_entry(
                     entity = cls(device, coordinator, select_mappings)
                     selects.append(entity)
                 except TypeError:
-                    _LOGGER.error(
+                    _LOGGER.exception(
                         "Select class '%s' not found or not callable", select_name
                     )
 
@@ -200,7 +208,6 @@ class DreoGenericModeSelect(DreoEntity, SelectEntity):
         select_mappings: dict[str, Any],
     ) -> None:
         """Initialize the Generic Mode Select."""
-
         super().__init__(
             device, coordinator, "select", select_mappings.get("attr_name")
         )

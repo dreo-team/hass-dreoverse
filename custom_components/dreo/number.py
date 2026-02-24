@@ -4,14 +4,16 @@ from __future__ import annotations
 
 import contextlib
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import DreoConfigEntry
+if TYPE_CHECKING:
+    from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+
+    from . import DreoConfigEntry
 from .const import DreoDirective, DreoEntityConfigSpec, DreoErrorCode, DreoFeatureSpec
 from .coordinator import (
     DreoCirculationFanDeviceData,
@@ -22,17 +24,20 @@ from .entity import DreoEntity
 from .status_dependency import DreotStatusDependency
 
 _LOGGER = logging.getLogger(__name__)
+MIN_RANGE_LEN = 2
+MIN_SPACING = 5
+DIRECTION_COUNT = 4
 
 
-async def async_setup_entry(
-    hass: HomeAssistant,
+async def async_setup_entry(  # noqa: PLR0915
+    _hass: HomeAssistant,
     config_entry: DreoConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the Dreo number entities from a config entry."""
 
     @callback
-    def async_add_number_entities() -> None:
+    def async_add_number_entities() -> None:  # noqa: PLR0912
         numbers: list[
             DreoRgbThresholdLow
             | DreoRgbThresholdHigh
@@ -183,7 +188,10 @@ class DreoSlideNumber(DreoEntity, NumberEntity):
             self._attr_icon = icon
 
         threshold_range = slide_component.get(DreoFeatureSpec.THRESHOLD_RANGE, [0, 100])
-        if isinstance(threshold_range, (list, tuple)) and len(threshold_range) >= 2:
+        if (
+            isinstance(threshold_range, list | tuple)
+            and len(threshold_range) >= MIN_RANGE_LEN
+        ):
             self._attr_native_min_value = float(threshold_range[0])
             self._attr_native_max_value = float(threshold_range[1])
             self._threshold_range = (
@@ -197,7 +205,7 @@ class DreoSlideNumber(DreoEntity, NumberEntity):
 
         # Get data_range for value mapping
         data_range = slide_component.get(DreoFeatureSpec.DATA_RANGE)
-        if isinstance(data_range, (list, tuple)) and len(data_range) >= 2:
+        if isinstance(data_range, list | tuple) and len(data_range) >= MIN_RANGE_LEN:
             self._data_range = (float(data_range[0]), float(data_range[1]))
         else:
             # If no data_range, use threshold_range as data_range (no mapping)
@@ -331,12 +339,13 @@ class _DreoRgbThresholdBase(DreoEntity, NumberEntity):
         )
         rng = humidifier_config.get(DreoFeatureSpec.AMBIENT_THRESHOLD, [])
 
-        if isinstance(rng, (list, tuple)) and len(rng) >= 2:
+        if isinstance(rng, list | tuple) and len(rng) >= MIN_RANGE_LEN:
             with contextlib.suppress(TypeError, ValueError):
                 self._min_value, self._max_value = int(rng[0]), int(rng[1])
 
-        # Get status dependency from config
-        # If not configured, use default dependency to check rgb_state for backward compatibility
+        # Get status dependency from config.
+        # If not configured, use default dependency to check rgb_state for
+        # compatibility.
         status_dependencies = humidifier_config.get(
             DreoFeatureSpec.AMBIENT_STATUS_AVAILABLE_DEPENDENCIES, []
         )
@@ -357,11 +366,11 @@ class _DreoRgbThresholdBase(DreoEntity, NumberEntity):
     def _parse_rgb_threshold(self, rgb: Any) -> tuple[int | None, int | None]:
         """Parse RGB threshold from device data."""
         with contextlib.suppress(TypeError, ValueError):
-            if isinstance(rgb, (list, tuple)) and len(rgb) >= 2:
+            if isinstance(rgb, list | tuple) and len(rgb) >= MIN_RANGE_LEN:
                 return int(rgb[0]), int(rgb[1])
             if isinstance(rgb, str) and "," in rgb:
                 parts = rgb.split(",")
-                if len(parts) >= 2:
+                if len(parts) >= MIN_RANGE_LEN:
                     return int(parts[0]), int(parts[1])
         return None, None
 
@@ -429,7 +438,9 @@ class DreoRgbThresholdLow(_DreoRgbThresholdBase):
             return
 
         constrained_low = (
-            max(self._min_value, high - 5) if high and high - low < 5 else low
+            max(self._min_value, high - MIN_SPACING)
+            if high and high - low < MIN_SPACING
+            else low
         )
         self._attr_native_value = float(constrained_low)
 
@@ -445,7 +456,9 @@ class DreoRgbThresholdLow(_DreoRgbThresholdBase):
         ):
             high_current = self._get_current_threshold(self.coordinator.data, 1)
 
-        clamped_low = min(req_low, high_current - 5) if high_current else req_low
+        clamped_low = (
+            min(req_low, high_current - MIN_SPACING) if high_current else req_low
+        )
         clamped_low = max(self._min_value, clamped_low)
 
         self._attr_native_value = float(clamped_low)
@@ -470,7 +483,9 @@ class DreoRgbThresholdHigh(_DreoRgbThresholdBase):
             return
 
         constrained_high = (
-            min(self._max_value, low + 5) if low and high - low < 5 else high
+            min(self._max_value, low + MIN_SPACING)
+            if low and high - low < MIN_SPACING
+            else high
         )
         self._attr_native_value = float(constrained_high)
 
@@ -487,7 +502,8 @@ class DreoRgbThresholdHigh(_DreoRgbThresholdBase):
             low_current = self._get_current_threshold(self.coordinator.data, 0)
 
         clamped_high = min(
-            self._max_value, max(req_high, low_current + 5) if low_current else req_high
+            self._max_value,
+            max(req_high, low_current + MIN_SPACING) if low_current else req_high,
         )
 
         self._attr_native_value = float(clamped_high)
@@ -575,7 +591,7 @@ class _DreoFanPairFixedAngleBase(DreoEntity, NumberEntity):
             self._sync_from_pair(horizontal, vertical)
         super()._handle_coordinator_update()
 
-    def _sync_from_pair(self, horizontal: int | None, vertical: int | None) -> None:
+    def _sync_from_pair(self, horizontal: int | None, _vertical: int | None) -> None:
         raise NotImplementedError
 
     async def _write_pair(self, horizontal: int, vertical: int) -> None:
@@ -624,18 +640,18 @@ class DreoFanPairFixedAngleHorizonal(_DreoFanPairFixedAngleBase):
 
         # Get step value from config
         step_value = fixed_angle_config.get("step", 1)
-        if isinstance(step_value, (int, float)):
+        if isinstance(step_value, int | float):
             with contextlib.suppress(TypeError, ValueError):
                 self._step_value = int(step_value)
 
         # Get horizontal angle range from config
         hor_rng = fixed_angle_config.get("range", [])
 
-        if isinstance(hor_rng, (list, tuple)) and len(hor_rng) >= 2:
+        if isinstance(hor_rng, list | tuple) and len(hor_rng) >= MIN_RANGE_LEN:
             with contextlib.suppress(TypeError, ValueError):
                 self._min_value, self._max_value = int(hor_rng[0]), int(hor_rng[1])
 
-    def _sync_from_pair(self, horizontal: int | None, vertical: int | None) -> None:
+    def _sync_from_pair(self, horizontal: int | None, _vertical: int | None) -> None:
         """Sync entity value from pair received in coordinator state."""
         if horizontal is None:
             self._attr_native_value = None
@@ -689,18 +705,18 @@ class DreoFanPairFixedAngleVertical(_DreoFanPairFixedAngleBase):
 
         # Get step value from config
         step_value = fixed_angle_config.get("step", 1)
-        if isinstance(step_value, (int, float)):
+        if isinstance(step_value, int | float):
             with contextlib.suppress(TypeError, ValueError):
                 self._step_value = int(step_value)
 
         # Get vertical angle range from config
         ver_rng = fixed_angle_config.get("range", [])
 
-        if isinstance(ver_rng, (list, tuple)) and len(ver_rng) >= 2:
+        if isinstance(ver_rng, list | tuple) and len(ver_rng) >= MIN_RANGE_LEN:
             with contextlib.suppress(TypeError, ValueError):
                 self._min_value, self._max_value = int(ver_rng[0]), int(ver_rng[1])
 
-    def _sync_from_pair(self, horizontal: int | None, vertical: int | None) -> None:
+    def _sync_from_pair(self, _horizontal: int | None, vertical: int | None) -> None:
         """Sync entity value from pair received in coordinator state."""
         if vertical is None:
             self._attr_native_value = None
@@ -839,14 +855,14 @@ class DreoFanSingleFixedAngleHorizonal(_DreoFanSingleFixedAngleBase):
 
         # Get step value from config
         step_value = fixed_angle_config.get("step", 1)
-        if isinstance(step_value, (int, float)):
+        if isinstance(step_value, int | float):
             with contextlib.suppress(TypeError, ValueError):
                 self._step_value = int(step_value)
 
         # Get horizontal angle range from config
         hor_rng = fixed_angle_config.get("range", [])
 
-        if isinstance(hor_rng, (list, tuple)) and len(hor_rng) >= 2:
+        if isinstance(hor_rng, list | tuple) and len(hor_rng) >= MIN_RANGE_LEN:
             with contextlib.suppress(TypeError, ValueError):
                 self._min_value, self._max_value = int(hor_rng[0]), int(hor_rng[1])
 
@@ -901,14 +917,14 @@ class DreoFanSingleFixedAngleVertical(_DreoFanSingleFixedAngleBase):
 
         # Get step value from config
         step_value = fixed_angle_config.get("step", 1)
-        if isinstance(step_value, (int, float)):
+        if isinstance(step_value, int | float):
             with contextlib.suppress(TypeError, ValueError):
                 self._step_value = int(step_value)
 
         # Get vertical angle range from config
         ver_rng = fixed_angle_config.get("range", [])
 
-        if isinstance(ver_rng, (list, tuple)) and len(ver_rng) >= 2:
+        if isinstance(ver_rng, list | tuple) and len(ver_rng) >= MIN_RANGE_LEN:
             with contextlib.suppress(TypeError, ValueError):
                 self._min_value, self._max_value = int(ver_rng[0]), int(ver_rng[1])
 
@@ -1011,7 +1027,7 @@ class _DreoFanOscRangeAllBase(DreoEntity, NumberEntity):
             getattr(data, self._oscrange_directive_name, None)
         )
         values = [up, right, down, left]
-        return values[index] if 0 <= index < 4 else None
+        return values[index] if 0 <= index < DIRECTION_COUNT else None
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -1032,7 +1048,11 @@ class _DreoFanOscRangeAllBase(DreoEntity, NumberEntity):
         super()._handle_coordinator_update()
 
     def _sync_from_all(
-        self, up: int | None, right: int | None, down: int | None, left: int | None
+        self,
+        up: int | None,
+        _right: int | None,
+        _down: int | None,
+        _left: int | None,
     ) -> None:
         """Sync entity value from all values received in coordinator state."""
         raise NotImplementedError
@@ -1083,18 +1103,22 @@ class DreoFanOscRangeUp(_DreoFanOscRangeAllBase):
 
         # Get step value from up config
         step_value = up_config.get("step", 1)
-        if isinstance(step_value, (int, float)):
+        if isinstance(step_value, int | float):
             with contextlib.suppress(TypeError, ValueError):
                 self._step_value = int(step_value)
 
         # Get up range from config
         up_rng = up_config.get("range", [])
-        if isinstance(up_rng, (list, tuple)) and len(up_rng) >= 2:
+        if isinstance(up_rng, list | tuple) and len(up_rng) >= MIN_RANGE_LEN:
             with contextlib.suppress(TypeError, ValueError):
                 self._min_value, self._max_value = int(up_rng[0]), int(up_rng[1])
 
     def _sync_from_all(
-        self, up: int | None, right: int | None, down: int | None, left: int | None
+        self,
+        up: int | None,
+        _right: int | None,
+        _down: int | None,
+        _left: int | None,
     ) -> None:
         """Sync entity value from all values."""
         if up is None:
@@ -1111,16 +1135,17 @@ class DreoFanOscRangeUp(_DreoFanOscRangeAllBase):
         right_current = self._right
         down_current = self._down
         left_current = self._left
-        if right_current is None or down_current is None or left_current is None:
-            if self.coordinator.data:
-                if right_current is None:
-                    right_current = self._get_current_value(self.coordinator.data, 1)
-                if down_current is None:
-                    down_current = self._get_current_value(self.coordinator.data, 2)
-                if left_current is None:
-                    left_current = self._get_current_value(self.coordinator.data, 3)
+        if (
+            right_current is None or down_current is None or left_current is None
+        ) and self.coordinator.data:
+            if right_current is None:
+                right_current = self._get_current_value(self.coordinator.data, 1)
+            if down_current is None:
+                down_current = self._get_current_value(self.coordinator.data, 2)
+            if left_current is None:
+                left_current = self._get_current_value(self.coordinator.data, 3)
 
-        # Limit up value to ensure vertical spacing: up - down >= vertical_spacing
+        # Limit up value to ensure vertical spacing: up - down >= vertical spacing.
         if down_current is not None:
             min_up = down_current + self._vertical_spacing
             req_up = max(req_up, min_up)
@@ -1162,18 +1187,22 @@ class DreoFanOscRangeRight(_DreoFanOscRangeAllBase):
 
         # Get step value from right config
         step_value = right_config.get("step", 1)
-        if isinstance(step_value, (int, float)):
+        if isinstance(step_value, int | float):
             with contextlib.suppress(TypeError, ValueError):
                 self._step_value = int(step_value)
 
         # Get right range from config
         right_rng = right_config.get("range", [])
-        if isinstance(right_rng, (list, tuple)) and len(right_rng) >= 2:
+        if isinstance(right_rng, list | tuple) and len(right_rng) >= MIN_RANGE_LEN:
             with contextlib.suppress(TypeError, ValueError):
                 self._min_value, self._max_value = int(right_rng[0]), int(right_rng[1])
 
     def _sync_from_all(
-        self, up: int | None, right: int | None, down: int | None, left: int | None
+        self,
+        _up: int | None,
+        right: int | None,
+        _down: int | None,
+        _left: int | None,
     ) -> None:
         """Sync entity value from all values."""
         if right is None:
@@ -1190,16 +1219,17 @@ class DreoFanOscRangeRight(_DreoFanOscRangeAllBase):
         up_current = self._up
         down_current = self._down
         left_current = self._left
-        if up_current is None or down_current is None or left_current is None:
-            if self.coordinator.data:
-                if up_current is None:
-                    up_current = self._get_current_value(self.coordinator.data, 0)
-                if down_current is None:
-                    down_current = self._get_current_value(self.coordinator.data, 2)
-                if left_current is None:
-                    left_current = self._get_current_value(self.coordinator.data, 3)
+        if (
+            up_current is None or down_current is None or left_current is None
+        ) and self.coordinator.data:
+            if up_current is None:
+                up_current = self._get_current_value(self.coordinator.data, 0)
+            if down_current is None:
+                down_current = self._get_current_value(self.coordinator.data, 2)
+            if left_current is None:
+                left_current = self._get_current_value(self.coordinator.data, 3)
 
-        # Limit right value to ensure horizontal spacing: right - left >= horizontal_spacing
+        # Limit right value to ensure horizontal spacing: right - left >= spacing.
         if left_current is not None:
             min_right = left_current + self._horizontal_spacing
             req_right = max(req_right, min_right)
@@ -1239,18 +1269,22 @@ class DreoFanOscRangeDown(_DreoFanOscRangeAllBase):
 
         # Get step value from down config
         step_value = down_config.get("step", 1)
-        if isinstance(step_value, (int, float)):
+        if isinstance(step_value, int | float):
             with contextlib.suppress(TypeError, ValueError):
                 self._step_value = int(step_value)
 
         # Get down range from config
         down_rng = down_config.get("range", [])
-        if isinstance(down_rng, (list, tuple)) and len(down_rng) >= 2:
+        if isinstance(down_rng, list | tuple) and len(down_rng) >= MIN_RANGE_LEN:
             with contextlib.suppress(TypeError, ValueError):
                 self._min_value, self._max_value = int(down_rng[0]), int(down_rng[1])
 
     def _sync_from_all(
-        self, up: int | None, right: int | None, down: int | None, left: int | None
+        self,
+        _up: int | None,
+        _right: int | None,
+        down: int | None,
+        _left: int | None,
     ) -> None:
         """Sync entity value from all values."""
         if down is None:
@@ -1267,16 +1301,17 @@ class DreoFanOscRangeDown(_DreoFanOscRangeAllBase):
         up_current = self._up
         right_current = self._right
         left_current = self._left
-        if up_current is None or right_current is None or left_current is None:
-            if self.coordinator.data:
-                if up_current is None:
-                    up_current = self._get_current_value(self.coordinator.data, 0)
-                if right_current is None:
-                    right_current = self._get_current_value(self.coordinator.data, 1)
-                if left_current is None:
-                    left_current = self._get_current_value(self.coordinator.data, 3)
+        if (
+            up_current is None or right_current is None or left_current is None
+        ) and self.coordinator.data:
+            if up_current is None:
+                up_current = self._get_current_value(self.coordinator.data, 0)
+            if right_current is None:
+                right_current = self._get_current_value(self.coordinator.data, 1)
+            if left_current is None:
+                left_current = self._get_current_value(self.coordinator.data, 3)
 
-        # Limit down value to ensure vertical spacing: up - down >= vertical_spacing
+        # Limit down value to ensure vertical spacing: up - down >= spacing.
         if up_current is not None:
             max_down = up_current - self._vertical_spacing
             req_down = min(req_down, max_down)
@@ -1316,18 +1351,22 @@ class DreoFanOscRangeLeft(_DreoFanOscRangeAllBase):
 
         # Get step value from left config
         step_value = left_config.get("step", 1)
-        if isinstance(step_value, (int, float)):
+        if isinstance(step_value, int | float):
             with contextlib.suppress(TypeError, ValueError):
                 self._step_value = int(step_value)
 
         # Get left range from config
         left_rng = left_config.get("range", [])
-        if isinstance(left_rng, (list, tuple)) and len(left_rng) >= 2:
+        if isinstance(left_rng, list | tuple) and len(left_rng) >= MIN_RANGE_LEN:
             with contextlib.suppress(TypeError, ValueError):
                 self._min_value, self._max_value = int(left_rng[0]), int(left_rng[1])
 
     def _sync_from_all(
-        self, up: int | None, right: int | None, down: int | None, left: int | None
+        self,
+        _up: int | None,
+        _right: int | None,
+        _down: int | None,
+        left: int | None,
     ) -> None:
         """Sync entity value from all values."""
         if left is None:
@@ -1344,16 +1383,17 @@ class DreoFanOscRangeLeft(_DreoFanOscRangeAllBase):
         up_current = self._up
         right_current = self._right
         down_current = self._down
-        if up_current is None or right_current is None or down_current is None:
-            if self.coordinator.data:
-                if up_current is None:
-                    up_current = self._get_current_value(self.coordinator.data, 0)
-                if right_current is None:
-                    right_current = self._get_current_value(self.coordinator.data, 1)
-                if down_current is None:
-                    down_current = self._get_current_value(self.coordinator.data, 2)
+        if (
+            up_current is None or right_current is None or down_current is None
+        ) and self.coordinator.data:
+            if up_current is None:
+                up_current = self._get_current_value(self.coordinator.data, 0)
+            if right_current is None:
+                right_current = self._get_current_value(self.coordinator.data, 1)
+            if down_current is None:
+                down_current = self._get_current_value(self.coordinator.data, 2)
 
-        # Limit left value to ensure horizontal spacing: right - left >= horizontal_spacing
+        # Limit left value to ensure horizontal spacing: right - left >= spacing.
         if right_current is not None:
             max_left = right_current - self._horizontal_spacing
             req_left = min(req_left, max_left)
@@ -1525,13 +1565,13 @@ class DreoFanOscRangeBothHorizontalLeft(_DreoFanOscRangeBothBase):
 
         # Get step value from left config
         step_value = left_config.get("step", 1)
-        if isinstance(step_value, (int, float)):
+        if isinstance(step_value, int | float):
             with contextlib.suppress(TypeError, ValueError):
                 self._step_value = int(step_value)
 
         # Get left range from left config
         left_rng = left_config.get("range", [])
-        if isinstance(left_rng, (list, tuple)) and len(left_rng) >= 2:
+        if isinstance(left_rng, list | tuple) and len(left_rng) >= MIN_RANGE_LEN:
             with contextlib.suppress(TypeError, ValueError):
                 self._min_value, self._max_value = int(left_rng[0]), int(left_rng[1])
 
@@ -1568,7 +1608,7 @@ class DreoFanOscRangeBothHorizontalLeft(_DreoFanOscRangeBothBase):
                 getattr(self.coordinator.data, self._oscrange_directive_name, None)
             )
 
-        # Limit left value to ensure horizontal spacing: right - left >= horizontal_spacing
+        # Limit left value to ensure horizontal spacing: right - left >= spacing.
         if right_current is not None:
             max_left = right_current - self._horizontal_spacing
             req_left = min(req_left, max_left)
@@ -1623,13 +1663,13 @@ class DreoFanOscRangeBothHorizontalRight(_DreoFanOscRangeBothBase):
 
         # Get step value from right config
         step_value = right_config.get("step", 1)
-        if isinstance(step_value, (int, float)):
+        if isinstance(step_value, int | float):
             with contextlib.suppress(TypeError, ValueError):
                 self._step_value = int(step_value)
 
         # Get right range from right config
         right_rng = right_config.get("range", [])
-        if isinstance(right_rng, (list, tuple)) and len(right_rng) >= 2:
+        if isinstance(right_rng, list | tuple) and len(right_rng) >= MIN_RANGE_LEN:
             with contextlib.suppress(TypeError, ValueError):
                 self._min_value, self._max_value = int(right_rng[0]), int(right_rng[1])
 
@@ -1666,7 +1706,7 @@ class DreoFanOscRangeBothHorizontalRight(_DreoFanOscRangeBothBase):
                 getattr(self.coordinator.data, self._oscrange_directive_name, None)
             )
 
-        # Limit right value to ensure horizontal spacing: right - left >= horizontal_spacing
+        # Limit right value to ensure horizontal spacing: right - left >= spacing.
         if left_current is not None:
             min_right = left_current + self._horizontal_spacing
             req_right = max(req_right, min_right)
@@ -1718,13 +1758,13 @@ class DreoFanOscRangeBothVerticalUp(_DreoFanOscRangeBothBase):
 
         # Get step value from up config
         step_value = up_config.get("step", 1)
-        if isinstance(step_value, (int, float)):
+        if isinstance(step_value, int | float):
             with contextlib.suppress(TypeError, ValueError):
                 self._step_value = int(step_value)
 
         # Get up range from up config
         up_rng = up_config.get("range", [])
-        if isinstance(up_rng, (list, tuple)) and len(up_rng) >= 2:
+        if isinstance(up_rng, list | tuple) and len(up_rng) >= MIN_RANGE_LEN:
             with contextlib.suppress(TypeError, ValueError):
                 self._min_value, self._max_value = int(up_rng[0]), int(up_rng[1])
 
@@ -1761,7 +1801,7 @@ class DreoFanOscRangeBothVerticalUp(_DreoFanOscRangeBothBase):
                 getattr(self.coordinator.data, self._oscrange_directive_name, None)
             )
 
-        # Limit up value to ensure vertical spacing: up - down >= vertical_spacing
+        # Limit up value to ensure vertical spacing: up - down >= spacing.
         if down_current is not None:
             min_up = down_current + self._vertical_spacing
             req_up = max(req_up, min_up)
@@ -1816,13 +1856,13 @@ class DreoFanOscRangeBothVerticalDown(_DreoFanOscRangeBothBase):
 
         # Get step value from down config
         step_value = down_config.get("step", 1)
-        if isinstance(step_value, (int, float)):
+        if isinstance(step_value, int | float):
             with contextlib.suppress(TypeError, ValueError):
                 self._step_value = int(step_value)
 
         # Get down range from down config
         down_rng = down_config.get("range", [])
-        if isinstance(down_rng, (list, tuple)) and len(down_rng) >= 2:
+        if isinstance(down_rng, list | tuple) and len(down_rng) >= MIN_RANGE_LEN:
             with contextlib.suppress(TypeError, ValueError):
                 self._min_value, self._max_value = int(down_rng[0]), int(down_rng[1])
 
@@ -1859,7 +1899,7 @@ class DreoFanOscRangeBothVerticalDown(_DreoFanOscRangeBothBase):
                 getattr(self.coordinator.data, self._oscrange_directive_name, None)
             )
 
-        # Limit down value to ensure vertical spacing: up - down >= vertical_spacing
+        # Limit down value to ensure vertical spacing: up - down >= spacing.
         if up_current is not None:
             max_down = up_current - self._vertical_spacing
             req_down = min(req_down, max_down)

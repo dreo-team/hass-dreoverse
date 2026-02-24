@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
@@ -16,14 +16,16 @@ from homeassistant.components.light import (
 )
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.issue_registry import (
     IssueSeverity,
     async_create_issue,
     async_delete_issue,
 )
 
-from . import DreoConfigEntry
+if TYPE_CHECKING:
+    from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+
+    from . import DreoConfigEntry
 from .const import (
     DOMAIN,
     DreoDeviceType,
@@ -43,23 +45,22 @@ from .coordinator import (
 from .entity import DreoEntity
 
 _LOGGER = logging.getLogger(__name__)
+RGB_MAX = 255
 
 
 def _has_rgb_features(device_data: DreoGenericDeviceData) -> bool:
     """Check if device data has RGB features."""
     return isinstance(
         device_data,
-        (
-            DreoCirculationFanDeviceData,
-            DreoCeilingFanDeviceData,
-            DreoHecDeviceData,
-            DreoHumidifierDeviceData,
-        ),
+        DreoCirculationFanDeviceData
+        | DreoCeilingFanDeviceData
+        | DreoHecDeviceData
+        | DreoHumidifierDeviceData,
     )
 
 
 async def async_setup_entry(
-    hass: HomeAssistant,
+    _hass: HomeAssistant,
     config_entry: DreoConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
@@ -116,12 +117,12 @@ async def async_setup_entry(
 class DreoRGBLight(DreoEntity, LightEntity):
     """Dreo Circulation Fan RGB Light."""
 
-    _attr_is_on = False
+    _attr_is_on: ClassVar[bool] = False
     _attr_brightness = None
     _attr_rgb_color = None
     _attr_effect = None
-    _attr_supported_color_modes = {ColorMode.RGB}
-    _attr_color_mode = ColorMode.RGB
+    _attr_supported_color_modes: ClassVar[set[ColorMode]] = {ColorMode.RGB}
+    _attr_color_mode: ClassVar[ColorMode] = ColorMode.RGB
 
     def __init__(
         self,
@@ -129,7 +130,6 @@ class DreoRGBLight(DreoEntity, LightEntity):
         coordinator: DreoDataUpdateCoordinator,
     ) -> None:
         """Initialize the Dreo circulation fan RGB light."""
-
         super().__init__(device, coordinator, "light", "RGB Light")
 
         device_id = device.get("deviceSn")
@@ -149,12 +149,12 @@ class DreoRGBLight(DreoEntity, LightEntity):
         )
 
     @callback
-    def _handle_coordinator_update(self):
+    def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
         self._update_attributes()
         super()._handle_coordinator_update()
 
-    def _update_attributes(self):
+    def _update_attributes(self) -> None:
         """Update attributes from coordinator data."""
         if not self.coordinator.data:
             return
@@ -174,9 +174,9 @@ class DreoRGBLight(DreoEntity, LightEntity):
 
         if fan_data.rgb_color is not None:
             color_int = fan_data.rgb_color
-            r = (color_int >> 16) & 255
-            g = (color_int >> 8) & 255
-            b = color_int & 255
+            r = (color_int >> 16) & RGB_MAX
+            g = (color_int >> 8) & RGB_MAX
+            b = color_int & RGB_MAX
             self._attr_rgb_color = (r, g, b)
 
         if self._attr_effect != "Breath" and self._device_type != DreoDeviceType.HEC:
@@ -208,7 +208,10 @@ class DreoRGBLight(DreoEntity, LightEntity):
 
             if current_rgb_mode == "Breath" and self._device_type != DreoDeviceType.HEC:
                 _LOGGER.warning(
-                    "Brightness control is disabled in %s mode for %s. Use color picker to change colors",
+                    (
+                        "Brightness control is disabled in %s mode for %s. "
+                        "Use color picker to change colors"
+                    ),
                     current_rgb_mode,
                     self.entity_id,
                 )
@@ -228,7 +231,7 @@ class DreoRGBLight(DreoEntity, LightEntity):
             else:
                 max_brightness = self._rgb_brightness[1]
                 brightness_255 = kwargs[ATTR_BRIGHTNESS]
-                brightness_percent = (brightness_255 / 255) * 100
+                brightness_percent = (brightness_255 / RGB_MAX) * 100
                 brightness_value = max(
                     1, int((brightness_percent / 100) * max_brightness)
                 )
@@ -251,7 +254,7 @@ class DreoRGBLight(DreoEntity, LightEntity):
             DreoErrorCode.TURN_ON_FAILED, **command_params
         )
 
-    async def async_turn_off(self, **kwargs: Any) -> None:
+    async def async_turn_off(self, **_: Any) -> None:
         """Turn off the RGB light."""
         await self.async_send_command_and_update(
             DreoErrorCode.TURN_OFF_FAILED, ambient_switch=False
@@ -276,7 +279,7 @@ class DreoRGBLight(DreoEntity, LightEntity):
 
     async def async_set_rgb_color_direct(self, red: int, green: int, blue: int) -> None:
         """Set RGB color directly via service call."""
-        if not (0 <= red <= 255 and 0 <= green <= 255 and 0 <= blue <= 255):
+        if not (0 <= red <= RGB_MAX and 0 <= green <= RGB_MAX and 0 <= blue <= RGB_MAX):
             _LOGGER.error(
                 "RGB values must be between 0-255. Got: R=%d, G=%d, B=%d",
                 red,
@@ -294,7 +297,6 @@ class DreoRGBLight(DreoEntity, LightEntity):
 
     async def async_set_light_speed(self, speed: int) -> None:
         """Set the light animation speed (for Circle and Breath modes)."""
-
         rgb_mode = None
         if self.coordinator.data and _has_rgb_features(self.coordinator.data):
             rgb_mode = getattr(self.coordinator.data, "rgb_mode", None)
@@ -306,7 +308,10 @@ class DreoRGBLight(DreoEntity, LightEntity):
             )
         else:
             _LOGGER.warning(
-                "Light speed can only be set in Circle or Breath mode. Current mode: %s",
+                (
+                    "Light speed can only be set in Circle or Breath mode. "
+                    "Current mode: %s"
+                ),
                 getattr(self.coordinator.data, "rgb_mode", "Unknown"),
             )
 
@@ -314,10 +319,12 @@ class DreoRGBLight(DreoEntity, LightEntity):
 class DreoRegularLight(DreoEntity, LightEntity):
     """Dreo Ceiling Fan Light."""
 
-    _attr_supported_features = LightEntityFeature.TRANSITION
-    _attr_supported_color_modes = {ColorMode.COLOR_TEMP}
-    _attr_color_mode = ColorMode.COLOR_TEMP
-    _attr_is_on = False
+    _attr_supported_features: ClassVar[LightEntityFeature] = (
+        LightEntityFeature.TRANSITION
+    )
+    _attr_supported_color_modes: ClassVar[set[ColorMode]] = {ColorMode.COLOR_TEMP}
+    _attr_color_mode: ClassVar[ColorMode] = ColorMode.COLOR_TEMP
+    _attr_is_on: ClassVar[bool] = False
     _attr_brightness = None
     _attr_color_temp_kelvin = None
     _attr_min_color_temp_kelvin = 2700  # warm white
@@ -348,12 +355,12 @@ class DreoRegularLight(DreoEntity, LightEntity):
         self._color_temp_range = tuple(color_temp_range)
 
     @callback
-    def _handle_coordinator_update(self):
+    def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
         self._update_attributes()
         super()._handle_coordinator_update()
 
-    def _update_attributes(self):
+    def _update_attributes(self) -> None:
         """Update attributes from coordinator data."""
         if not self.coordinator.data:
             return
@@ -380,7 +387,7 @@ class DreoRegularLight(DreoEntity, LightEntity):
             and ceiling_fan_data.brightness is not None
         ):
             brightness_percent = ceiling_fan_data.brightness
-            self._attr_brightness = int((brightness_percent / 100) * 255)
+            self._attr_brightness = int((brightness_percent / 100) * RGB_MAX)
         else:
             self._attr_brightness = None
 
@@ -406,7 +413,7 @@ class DreoRegularLight(DreoEntity, LightEntity):
 
         if ATTR_BRIGHTNESS in kwargs:
             brightness_255 = kwargs[ATTR_BRIGHTNESS]
-            brightness_percent = max(1, int((brightness_255 / 255) * 100))
+            brightness_percent = max(1, int((brightness_255 / RGB_MAX) * 100))
             command_params[DreoDirective.LIGHT_BRIGHTNESS] = brightness_percent
 
         if ATTR_COLOR_TEMP_KELVIN in kwargs:
@@ -429,7 +436,7 @@ class DreoRegularLight(DreoEntity, LightEntity):
             DreoErrorCode.TURN_ON_FAILED, **command_params
         )
 
-    async def async_turn_off(self, **kwargs: Any) -> None:
+    async def async_turn_off(self, **_: Any) -> None:
         """Turn off the light."""
         await self.async_send_command_and_update(
             DreoErrorCode.TURN_OFF_FAILED, light_switch=False

@@ -10,5 +10,5 @@
   "issue_tracker": "https://github.com/dreo-team/hass-dreoverse/issues",
   "quality_scale": "bronze",
   "requirements": ["pydreo-cloud==1.0.0"],
-  "version": "2.2.0"
+  "version": "2.2.1"
 }

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from homeassistant.components.humidifier import (
     HumidifierEntity,
@@ -12,9 +12,11 @@ from homeassistant.components.humidifier import (
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import DreoConfigEntry
+if TYPE_CHECKING:
+    from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+
+    from . import DreoConfigEntry
 from .const import (
     DOMAIN,
     DreoDeviceType,
@@ -32,10 +34,12 @@ from .coordinator import (
 from .entity import DreoEntity
 
 _LOGGER = logging.getLogger(__name__)
+MIN_RANGE_LEN = 2
+DEFAULT_FOG_LEVEL_RANGE = (1, 6)
 
 
 async def async_setup_entry(
-    hass: HomeAssistant,
+    _hass: HomeAssistant,
     config_entry: DreoConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
@@ -102,12 +106,14 @@ async def async_setup_entry(
 class DreoHecHumidifier(DreoEntity, HumidifierEntity):
     """Dreo HEC (Hybrid Evaporative Cooler) humidifier entity."""
 
-    _attr_supported_features = HumidifierEntityFeature.MODES
-    _attr_is_on = False
+    _attr_supported_features: ClassVar[HumidifierEntityFeature] = (
+        HumidifierEntityFeature.MODES
+    )
+    _attr_is_on: ClassVar[bool] = False
     _attr_mode: str | None = None
     _attr_current_humidity: int | None = None
     _attr_target_humidity: int | None = None
-    _attr_available_modes: list[str] = []
+    _attr_available_modes: ClassVar[list[str]] = []
 
     def __init__(
         self,
@@ -123,7 +129,7 @@ class DreoHecHumidifier(DreoEntity, HumidifierEntity):
         )
 
         humidity_range = humidifier_config.get(DreoFeatureSpec.HUMIDITY_RANGE)
-        if humidity_range and len(humidity_range) >= 2:
+        if humidity_range and len(humidity_range) >= MIN_RANGE_LEN:
             self._attr_min_humidity = int(humidity_range[0])
             self._attr_max_humidity = int(humidity_range[1])
 
@@ -157,15 +163,6 @@ class DreoHecHumidifier(DreoEntity, HumidifierEntity):
         if hec_data.target_humidity is not None:
             self._attr_target_humidity = int(hec_data.target_humidity)
 
-        # if (
-        #     hec_data.humidity_mode
-        #     and self._attr_available_modes
-        #     and hec_data.humidity_mode in self._attr_available_modes
-        # ):
-        #     self._attr_mode = hec_data.humidity_mode
-        # else:
-        #     self._attr_mode = "Normal"
-
     @property
     def is_on(self) -> bool:
         """Return True if the humidifier is on."""
@@ -183,13 +180,13 @@ class DreoHecHumidifier(DreoEntity, HumidifierEntity):
         """Return the target humidity."""
         return self._attr_target_humidity
 
-    async def async_turn_on(self, **kwargs: Any) -> None:
+    async def async_turn_on(self, **_: Any) -> None:
         """Turn the humidifier on."""
         await self.async_send_command_and_update(
             DreoErrorCode.TURN_ON_FAILED, humidity_switch=True
         )
 
-    async def async_turn_off(self, **kwargs: Any) -> None:
+    async def async_turn_off(self, **_: Any) -> None:
         """Turn the humidifier off."""
         await self.async_send_command_and_update(
             DreoErrorCode.TURN_OFF_FAILED, humidity_switch=False
@@ -238,15 +235,17 @@ class DreoHecHumidifier(DreoEntity, HumidifierEntity):
 class DreoHumidifier(DreoEntity, HumidifierEntity):
     """Dreo Humidifier entity for dedicated humidifier devices like HHM001S."""
 
-    _attr_supported_features = HumidifierEntityFeature.MODES
-    _attr_is_on = False
+    _attr_supported_features: ClassVar[HumidifierEntityFeature] = (
+        HumidifierEntityFeature.MODES
+    )
+    _attr_is_on: ClassVar[bool] = False
     _attr_mode: str | None = None
     _attr_current_humidity: int | None = None
     _attr_target_humidity: int | None = None
-    _attr_available_modes: list[str] = []
-    _attr_directive_graph: dict[str, Any] = {}
-    _attr_description_limits: dict[str, Any] = {}
-    _attr_fog_level_range: list[int] = [1, 6]
+    _attr_available_modes: ClassVar[list[str]] = []
+    _attr_directive_graph: ClassVar[dict[str, Any]] = {}
+    _attr_description_limits: ClassVar[dict[str, Any]] = {}
+    _attr_fog_level_range: ClassVar[list[int]] = list(DEFAULT_FOG_LEVEL_RANGE)
     _attr_rgb_humidity_threshold: str | None = None
 
     def __init__(
@@ -264,7 +263,7 @@ class DreoHumidifier(DreoEntity, HumidifierEntity):
 
         # Set humidity range
         humidity_range = humidifier_config.get(DreoFeatureSpec.HUMIDITY_RANGE)
-        if humidity_range and len(humidity_range) >= 2:
+        if humidity_range and len(humidity_range) >= MIN_RANGE_LEN:
             self._attr_min_humidity = int(humidity_range[0])
             self._attr_max_humidity = int(humidity_range[1])
         else:
@@ -286,14 +285,16 @@ class DreoHumidifier(DreoEntity, HumidifierEntity):
         )
 
         # Set fog_level range from config
-        fog_level_range = humidifier_config.get("fog_level_range", [1, 6])
-        if len(fog_level_range) >= 2:
+        fog_level_range = humidifier_config.get(
+            "fog_level_range", DEFAULT_FOG_LEVEL_RANGE
+        )
+        if len(fog_level_range) >= MIN_RANGE_LEN:
             self._attr_fog_level_range = [
                 int(fog_level_range[0]),
                 int(fog_level_range[1]),
             ]
         else:
-            self._attr_fog_level_range = [1, 6]
+            self._attr_fog_level_range = list(DEFAULT_FOG_LEVEL_RANGE)
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -314,9 +315,9 @@ class DreoHumidifier(DreoEntity, HumidifierEntity):
         self._attr_is_on = humidifier_data.is_on
 
         self._set_attrs_if(
-            not self._attr_is_on or not self._attr_available,
-            self.coordinator.data,
-            {
+            condition=not self._attr_is_on or not self._attr_available,
+            target=self.coordinator.data,
+            attrs={
                 "current_humidity": None,
                 "target_humidity": None,
                 "mode": None,
@@ -360,17 +361,17 @@ class DreoHumidifier(DreoEntity, HumidifierEntity):
                 DreoEntityConfigSpec.HUMIDIFIER_ENTITY_CONF, {}
             )
             humidity_range = humidifier_config.get(DreoFeatureSpec.HUMIDITY_RANGE)
-            if humidity_range and len(humidity_range) >= 2:
+            if humidity_range and len(humidity_range) >= MIN_RANGE_LEN:
                 self._attr_min_humidity = int(humidity_range[0])
                 self._attr_max_humidity = int(humidity_range[1])
 
-    async def async_turn_on(self, **kwargs: Any) -> None:
+    async def async_turn_on(self, **_: Any) -> None:
         """Turn the humidifier on."""
         await self.async_send_command_and_update(
             DreoErrorCode.TURN_ON_FAILED, power_switch=True
         )
 
-    async def async_turn_off(self, **kwargs: Any) -> None:
+    async def async_turn_off(self, **_: Any) -> None:
         """Turn the humidifier off."""
         await self.async_send_command_and_update(
             DreoErrorCode.TURN_OFF_FAILED, power_switch=False
@@ -442,14 +443,16 @@ class DreoHumidifier(DreoEntity, HumidifierEntity):
 class DreoDehumidifier(DreoEntity, HumidifierEntity):
     """Expose target humidity adjustment for HDH devices in Auto/Custom."""
 
-    _attr_supported_features = HumidifierEntityFeature.MODES
-    _attr_is_on = False
+    _attr_supported_features: ClassVar[HumidifierEntityFeature] = (
+        HumidifierEntityFeature.MODES
+    )
+    _attr_is_on: ClassVar[bool] = False
     _attr_mode: str | None = None
     _attr_current_humidity: int | None = None
     _attr_target_humidity: int | None = None
-    _attr_available_modes: list[str] = []
-    _attr_directive_graph: dict[str, Any] = {}
-    _attr_description_limits: dict[str, Any] = {}
+    _attr_available_modes: ClassVar[list[str]] = []
+    _attr_directive_graph: ClassVar[dict[str, Any]] = {}
+    _attr_description_limits: ClassVar[dict[str, Any]] = {}
 
     def __init__(
         self,
@@ -466,7 +469,7 @@ class DreoDehumidifier(DreoEntity, HumidifierEntity):
 
         # Target humidity range for HDH
         humidity_range = humidifier_config.get(DreoFeatureSpec.HUMIDITY_RANGE)
-        if humidity_range and len(humidity_range) >= 2:
+        if humidity_range and len(humidity_range) >= MIN_RANGE_LEN:
             self._attr_min_humidity = int(humidity_range[0])
             self._attr_max_humidity = int(humidity_range[1])
 
@@ -503,7 +506,8 @@ class DreoDehumidifier(DreoEntity, HumidifierEntity):
             self._attr_target_humidity = int(data.target_humidity)
         self._attr_mode = data.mode
 
-        # If current mode disables humidity adjustment, freeze slider by setting min==max
+        # If current mode disables humidity adjustment, freeze slider by setting
+        # min == max.
         set_limits = self._attr_description_limits.get("set_humidity", {})
         disabled_modes = (
             set_limits.get("disableOnModes", []) if isinstance(set_limits, dict) else []
@@ -524,17 +528,17 @@ class DreoDehumidifier(DreoEntity, HumidifierEntity):
             )
 
             humidity_range = humidifier_config.get(DreoFeatureSpec.HUMIDITY_RANGE)
-            if humidity_range and len(humidity_range) >= 2:
+            if humidity_range and len(humidity_range) >= MIN_RANGE_LEN:
                 self._attr_min_humidity = int(humidity_range[0])
                 self._attr_max_humidity = int(humidity_range[1])
 
-    async def async_turn_on(self, **kwargs: Any) -> None:
+    async def async_turn_on(self, **_: Any) -> None:
         """Turn the humidifier on."""
         await self.async_send_command_and_update(
             DreoErrorCode.TURN_ON_FAILED, power_switch=True
         )
 
-    async def async_turn_off(self, **kwargs: Any) -> None:
+    async def async_turn_off(self, **_: Any) -> None:
         """Turn the humidifier off."""
         await self.async_send_command_and_update(
             DreoErrorCode.TURN_OFF_FAILED, power_switch=False

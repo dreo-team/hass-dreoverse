@@ -3,12 +3,11 @@
 import hashlib
 from typing import Any
 
-from pydreo.client import DreoClient
-from pydreo.exceptions import DreoBusinessException, DreoException
 import voluptuous as vol
-
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
+from pydreo.client import DreoClient
+from pydreo.exceptions import DreoBusinessException, DreoException
 
 from .const import DOMAIN
 
@@ -24,8 +23,8 @@ class DreoFlowHandler(ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     def _hash_password(password: str) -> str:
-        """Hash password using MD5."""
-        return hashlib.md5(password.encode("UTF-8")).hexdigest()
+        """Hash password using MD5 (API requirement)."""
+        return hashlib.md5(password.encode("UTF-8")).hexdigest()  # noqa: S324
 
     async def _validate_login(
         self, username: str, password: str
@@ -45,7 +44,6 @@ class DreoFlowHandler(ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Handle a flow initialized by the user."""
-
         errors: dict[str, str] = {}
         if user_input:
             username = user_input[CONF_USERNAME]

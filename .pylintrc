@@ -1,0 +1,22 @@
+[MASTER]
+disable=
+    C0302,  # too-many-lines
+    C0325,  # superfluous-parens
+    C0413,  # wrong-import-position (TYPE_CHECKING patterns)
+    E0401,  # import-error (HA deps resolved at runtime)
+    R0801,  # duplicate-code
+    R0902,  # too-many-instance-attributes
+    R0903,  # too-few-public-methods
+    R0912,  # too-many-branches
+    R0913,  # too-many-arguments
+    R0914,  # too-many-locals
+    R0915,  # too-many-statements
+    R0917,  # too-many-positional-arguments
+    W0221,  # arguments-differ (HA async overrides)
+    W0223,  # abstract-method (HA mixins/stubs)
+
+[TYPECHECK]
+ignored-modules=
+    pydreo,
+    voluptuous,
+    homeassistant,

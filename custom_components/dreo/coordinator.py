@@ -2,19 +2,20 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from datetime import timedelta
 import logging
-from typing import Any, NoReturn
-
-from pydreo.client import DreoClient
-from pydreo.exceptions import DreoException
+from datetime import timedelta
+from typing import TYPE_CHECKING, Any, NoReturn
 
 from homeassistant.components.climate import HVACMode
-from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util.percentage import ranged_value_to_percentage
+from pydreo.exceptions import DreoException
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from homeassistant.core import HomeAssistant
+    from pydreo.client import DreoClient
 from .const import (
     DOMAIN,
     DreoDeviceType,
@@ -26,6 +27,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 UPDATE_INTERVAL = timedelta(seconds=15)
+MIN_RANGE_LEN = 2
 
 
 def _set_toggle_switches_to_state(
@@ -70,7 +72,7 @@ class DreoGenericDeviceData:
     available: bool = False
     is_on: bool = False
 
-    def __init__(self, available: bool = False, is_on: bool = False) -> None:
+    def __init__(self, *, available: bool = False, is_on: bool = False) -> None:
         """Initialize generic device data."""
         self.available = available
         self.is_on = is_on
@@ -92,8 +94,9 @@ class DreoFanDeviceData(DreoGenericDeviceData):
     hfixed_angle_range: str | None = None
     vfixed_angle_range: str | None = None
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
+        *,
         available: bool = False,
         is_on: bool = False,
         mode: str | None = None,
@@ -112,7 +115,7 @@ class DreoFanDeviceData(DreoGenericDeviceData):
         vfixed_angle_range: str | None = None,
     ) -> None:
         """Initialize fan device data."""
-        super().__init__(available, is_on)
+        super().__init__(available=available, is_on=is_on)
         self.mode = mode
         self.oscillate = oscillate
         self.speed_percentage = speed_percentage
@@ -129,11 +132,10 @@ class DreoFanDeviceData(DreoGenericDeviceData):
         self.vfixed_angle_range = vfixed_angle_range
 
     @staticmethod
-    def process_fan_data(
+    def process_fan_data(  # noqa: PLR0912
         state: dict[str, Any], model_config: dict[str, Any]
     ) -> DreoFanDeviceData:
         """Process fan device specific data."""
-
         fan_data = DreoFanDeviceData(
             available=state.get(DreoDirective.CONNECTED, False),
             is_on=state.get(DreoDirective.POWER_SWITCH, False),
@@ -151,7 +153,7 @@ class DreoFanDeviceData(DreoGenericDeviceData):
                 DreoEntityConfigSpec.FAN_ENTITY_CONF,
                 DreoFeatureSpec.SPEED_RANGE,
             )
-            if speed_range and len(speed_range) >= 2:
+            if speed_range and len(speed_range) >= MIN_RANGE_LEN:
                 fan_data.speed_percentage = int(
                     ranged_value_to_percentage(tuple(speed_range), float(speed))
                 )
@@ -218,8 +220,9 @@ class DreoCirculationFanDeviceData(DreoGenericDeviceData):
     vfixed_angle_range: str | None = None
     hwfpangle: str | None = None
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
+        *,
         available: bool = False,
         is_on: bool = False,
         mode: str | None = None,
@@ -244,7 +247,7 @@ class DreoCirculationFanDeviceData(DreoGenericDeviceData):
         hwfpangle: str | None = None,
     ) -> None:
         """Initialize circulation fan device data."""
-        super().__init__(available, is_on)
+        super().__init__(available=available, is_on=is_on)
         self.mode = mode
         self.speed_level = speed_level
         self.speed_percentage = speed_percentage
@@ -267,11 +270,10 @@ class DreoCirculationFanDeviceData(DreoGenericDeviceData):
         self.hwfpangle = hwfpangle
 
     @staticmethod
-    def process_circulation_fan_data(
+    def process_circulation_fan_data(  # noqa: PLR0912
         state: dict[str, Any], model_config: dict[str, Any]
     ) -> DreoCirculationFanDeviceData:
         """Process circulation fan device specific data."""
-
         fan_data = DreoCirculationFanDeviceData(
             available=state.get(DreoDirective.CONNECTED, False),
             is_on=state.get(DreoDirective.POWER_SWITCH, False),
@@ -288,7 +290,7 @@ class DreoCirculationFanDeviceData(DreoGenericDeviceData):
                 DreoEntityConfigSpec.FAN_ENTITY_CONF,
                 DreoFeatureSpec.SPEED_RANGE,
             )
-            if speed_range and len(speed_range) >= 2:
+            if speed_range and len(speed_range) >= MIN_RANGE_LEN:
                 fan_data.speed_percentage = int(
                     ranged_value_to_percentage(tuple(speed_range), float(speed))
                 )
@@ -367,8 +369,9 @@ class DreoHacDeviceData(DreoGenericDeviceData):
     target_humidity: float | None = None
     model_config: dict[str, Any] | None = None
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
+        *,
         available: bool = False,
         is_on: bool = False,
         mode: str | None = None,
@@ -381,7 +384,7 @@ class DreoHacDeviceData(DreoGenericDeviceData):
         model_config: dict[str, Any] | None = None,
     ) -> None:
         """Initialize HAC device data."""
-        super().__init__(available, is_on)
+        super().__init__(available=available, is_on=is_on)
         self.mode = mode
         self.hvac_mode = hvac_mode
         self.speed_level = speed_level
@@ -396,7 +399,6 @@ class DreoHacDeviceData(DreoGenericDeviceData):
         state: dict[str, Any], model_config: dict[str, Any]
     ) -> DreoHacDeviceData:
         """Process HAC device specific data."""
-
         hac_data = DreoHacDeviceData(
             available=state.get(DreoDirective.CONNECTED, False),
             is_on=state.get(DreoDirective.POWER_SWITCH, False),
@@ -418,7 +420,7 @@ class DreoHacDeviceData(DreoGenericDeviceData):
                 DreoEntityConfigSpec.FAN_ENTITY_CONF,
                 DreoFeatureSpec.SPEED_RANGE,
             )
-            if speed_range and len(speed_range) >= 2:
+            if speed_range and len(speed_range) >= MIN_RANGE_LEN:
                 hac_data.speed_percentage = int(
                     ranged_value_to_percentage(tuple(speed_range), float(speed))
                 )
@@ -451,8 +453,9 @@ class DreoHeaterDeviceData(DreoGenericDeviceData):
     oscangle: str | None = None
     oscmode: str | None = None
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
+        *,
         available: bool = False,
         is_on: bool = False,
         hvac_mode: str | None = None,
@@ -467,7 +470,7 @@ class DreoHeaterDeviceData(DreoGenericDeviceData):
         oscmode: str | None = None,
     ) -> None:
         """Initialize Heater device data."""
-        super().__init__(available, is_on)
+        super().__init__(available=available, is_on=is_on)
         self.hvac_mode = hvac_mode
         self.mode = mode
         self.target_temperature = target_temperature
@@ -544,8 +547,9 @@ class DreoHecDeviceData(DreoGenericDeviceData):
     foglevel: str | None = None
     model_config: dict[str, Any] | None = None
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
+        *,
         available: bool = False,
         is_on: bool = False,
         mode: str | None = None,
@@ -566,7 +570,7 @@ class DreoHecDeviceData(DreoGenericDeviceData):
         model_config: dict[str, Any] | None = None,
     ) -> None:
         """Initialize HEC device data."""
-        super().__init__(available, is_on)
+        super().__init__(available=available, is_on=is_on)
         self.mode = mode
         self.speed_level = speed_level
         self.speed_percentage = speed_percentage
@@ -585,11 +589,10 @@ class DreoHecDeviceData(DreoGenericDeviceData):
         self.model_config = model_config
 
     @staticmethod
-    def process_hec_data(
+    def process_hec_data(  # noqa: PLR0912
         state: dict[str, Any], model_config: dict[str, Any]
     ) -> DreoHecDeviceData:
         """Process HEC device specific data."""
-
         hec_data = DreoHecDeviceData(
             available=state.get(DreoDirective.CONNECTED, False),
             is_on=state.get(DreoDirective.POWER_SWITCH, False),
@@ -606,7 +609,7 @@ class DreoHecDeviceData(DreoGenericDeviceData):
                 DreoEntityConfigSpec.FAN_ENTITY_CONF,
                 DreoFeatureSpec.SPEED_RANGE,
             )
-            if speed_range and len(speed_range) >= 2:
+            if speed_range and len(speed_range) >= MIN_RANGE_LEN:
                 hec_data.speed_percentage = int(
                     ranged_value_to_percentage(tuple(speed_range), float(speed))
                 )
@@ -667,8 +670,9 @@ class DreoHapDeviceData(DreoGenericDeviceData):
     display_mode: str | None = None
     model_config: dict[str, Any] | None = None
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
+        *,
         available: bool = False,
         is_on: bool = False,
         mode: str | None = None,
@@ -678,12 +682,11 @@ class DreoHapDeviceData(DreoGenericDeviceData):
         lightsensor_switch: bool | None = None,
         childlock_switch: bool | None = None,
         mute_switch: bool | None = None,
-        schedule_switch: bool | None = None,
         display_mode: str | None = None,
         model_config: dict[str, Any] | None = None,
     ) -> None:
         """Initialize HAP device data."""
-        super().__init__(available, is_on)
+        super().__init__(available=available, is_on=is_on)
         self.mode = mode
         self.speed_level = speed_level
         self.speed_percentage = speed_percentage
@@ -699,7 +702,6 @@ class DreoHapDeviceData(DreoGenericDeviceData):
         state: dict[str, Any], model_config: dict[str, Any]
     ) -> DreoHapDeviceData:
         """Process HAP device specific data."""
-
         hap_data = DreoHapDeviceData(
             available=state.get(DreoDirective.CONNECTED, False),
             is_on=state.get(DreoDirective.POWER_SWITCH, False),
@@ -719,7 +721,7 @@ class DreoHapDeviceData(DreoGenericDeviceData):
                 DreoEntityConfigSpec.FAN_ENTITY_CONF,
                 DreoFeatureSpec.SPEED_RANGE,
             )
-            if speed_range and len(speed_range) >= 2:
+            if speed_range and len(speed_range) >= MIN_RANGE_LEN:
                 hap_data.speed_percentage = int(
                     ranged_value_to_percentage(tuple(speed_range), float(speed))
                 )
@@ -741,8 +743,9 @@ class DreoDehumidifierDeviceData(DreoGenericDeviceData):
     work_time: int | None = None
     model_config: dict[str, Any] | None = None
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
+        *,
         available: bool = False,
         is_on: bool = False,
         mode: str | None = None,
@@ -752,7 +755,7 @@ class DreoDehumidifierDeviceData(DreoGenericDeviceData):
         model_config: dict[str, Any] | None = None,
     ) -> None:
         """Initialize dehumidifier device data."""
-        super().__init__(available, is_on)
+        super().__init__(available=available, is_on=is_on)
         self.mode = mode
         self.wind_level = wind_level
         self.target_humidity = target_humidity
@@ -764,7 +767,6 @@ class DreoDehumidifierDeviceData(DreoGenericDeviceData):
         state: dict[str, Any], model_config: dict[str, Any]
     ) -> DreoDehumidifierDeviceData:
         """Process dehumidifier device specific data."""
-
         hdh = DreoDehumidifierDeviceData(
             available=state.get(DreoDirective.CONNECTED, False),
             is_on=state.get(DreoDirective.POWER_SWITCH, False),
@@ -811,8 +813,9 @@ class DreoHumidifierDeviceData(DreoGenericDeviceData):
     rgb_breath_speed: int | None = None
     rgb_cycle_speed: int | None = None
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
+        *,
         available: bool = False,
         is_on: bool = False,
         mode: str | None = None,
@@ -834,7 +837,7 @@ class DreoHumidifierDeviceData(DreoGenericDeviceData):
         rgb_cycle_speed: int | None = None,
     ) -> None:
         """Initialize Dreo humidifier device data."""
-        super().__init__(available, is_on)
+        super().__init__(available=available, is_on=is_on)
         self.mode = mode
         self.target_humidity = target_humidity
         self.current_humidity = current_humidity
@@ -854,11 +857,10 @@ class DreoHumidifierDeviceData(DreoGenericDeviceData):
         self.rgb_cycle_speed = rgb_cycle_speed
 
     @staticmethod
-    def process_humidifier_data(
+    def process_humidifier_data(  # noqa: PLR0912
         state: dict[str, Any], model_config: dict[str, Any]
     ) -> DreoHumidifierDeviceData:
         """Process humidifier device specific data."""
-
         humidifier_data = DreoHumidifierDeviceData(
             available=state.get(DreoDirective.CONNECTED, False),
             is_on=state.get(DreoDirective.POWER_SWITCH, False),
@@ -940,8 +942,9 @@ class DreoCeilingFanDeviceData(DreoGenericDeviceData):
     rgb_speed: str | None = None
     model_config: dict[str, Any] | None = None
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
+        *,
         available: bool = False,
         is_on: bool = False,
         mode: str | None = None,
@@ -958,7 +961,7 @@ class DreoCeilingFanDeviceData(DreoGenericDeviceData):
         model_config: dict[str, Any] | None = None,
     ) -> None:
         """Initialize ceiling fan device data."""
-        super().__init__(available, is_on)
+        super().__init__(available=available, is_on=is_on)
         self.mode = mode
         self.speed_level = speed_level
         self.speed_percentage = speed_percentage
@@ -977,7 +980,6 @@ class DreoCeilingFanDeviceData(DreoGenericDeviceData):
         state: dict[str, Any], model_config: dict[str, Any]
     ) -> DreoCeilingFanDeviceData:
         """Process ceiling fan device specific data."""
-
         ceiling_fan_data = DreoCeilingFanDeviceData(
             available=state.get(DreoDirective.CONNECTED, False),
             is_on=state.get(DreoDirective.POWER_SWITCH, False),
@@ -994,7 +996,7 @@ class DreoCeilingFanDeviceData(DreoGenericDeviceData):
                 DreoEntityConfigSpec.FAN_ENTITY_CONF,
                 DreoFeatureSpec.SPEED_RANGE,
             )
-            if speed_range and len(speed_range) >= 2:
+            if speed_range and len(speed_range) >= MIN_RANGE_LEN:
                 ceiling_fan_data.speed_percentage = int(
                     ranged_value_to_percentage(tuple(speed_range), float(speed))
                 )
@@ -1094,7 +1096,8 @@ class DreoDataUpdateCoordinator(DataUpdateCoordinator[DreoDeviceData | None]):
             self.data_processor = DreoDehumidifierDeviceData.process_dehumidifier_data
         else:
             _LOGGER.warning(
-                "Unsupported device type: %s for model: %s - data will not be processed",
+                "Unsupported device type: %s for model: %s - "
+                "data will not be processed",
                 self.device_type,
                 self.device_id,
             )
@@ -1105,15 +1108,19 @@ class DreoDataUpdateCoordinator(DataUpdateCoordinator[DreoDeviceData | None]):
 
         def _raise_no_status() -> NoReturn:
             """Raise UpdateFailed for no status available."""
-            raise UpdateFailed(
-                f"No status available for device {self.device_id} with type {self.device_type}"
+            message = (
+                "No status available for device "
+                f"{self.device_id} with type {self.device_type}"
             )
+            raise UpdateFailed(message)
 
         def _raise_no_processor() -> NoReturn:
             """Raise UpdateFailed for no data processor available."""
-            raise UpdateFailed(
-                f"No data processor available for device {self.device_id} with type {self.device_type}"
+            message = (
+                "No data processor available for device "
+                f"{self.device_id} with type {self.device_type}"
             )
+            raise UpdateFailed(message)
 
         try:
             state = await self.hass.async_add_executor_job(
@@ -1128,6 +1135,8 @@ class DreoDataUpdateCoordinator(DataUpdateCoordinator[DreoDeviceData | None]):
 
             return self.data_processor(state, self.model_config)
         except DreoException as error:
-            raise UpdateFailed(f"Error communicating with Dreo API: {error}") from error
+            message = f"Error communicating with Dreo API: {error}"
+            raise UpdateFailed(message) from error
         except Exception as error:
-            raise UpdateFailed(f"Unexpected error: {error}") from error
+            message = f"Unexpected error: {error}"
+            raise UpdateFailed(message) from error

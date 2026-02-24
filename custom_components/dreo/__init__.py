@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
-
-from pydreo.client import DreoClient
-from pydreo.exceptions import DreoBusinessException, DreoException
+from typing import TYPE_CHECKING, Any, TypeAlias
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
+from pydreo.client import DreoClient
+from pydreo.exceptions import DreoBusinessException, DreoException
 
 from .const import DreoEntityConfigSpec
 from .coordinator import DreoDataUpdateCoordinator
@@ -21,7 +20,7 @@ if TYPE_CHECKING:
 
 _LOGGER = logging.getLogger(__name__)
 
-type DreoConfigEntry = ConfigEntry[DreoData]
+DreoConfigEntry: TypeAlias = ConfigEntry["DreoData"]
 
 PLATFORMS = [
     Platform.CLIMATE,
@@ -99,7 +98,6 @@ async def async_setup_device_coordinator(
     coordinators: dict[str, DreoDataUpdateCoordinator],
 ) -> None:
     """Set up coordinator for a single device."""
-
     device_model = device.get("model")
     device_id = device.get("deviceSn")
     device_type = device.get("deviceType")

@@ -3,15 +3,17 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.const import PERCENTAGE, Platform, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import UNDEFINED
 
-from . import DreoConfigEntry
+if TYPE_CHECKING:
+    from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+
+    from . import DreoConfigEntry
 from .const import DreoEntityConfigSpec, DreoFeatureSpec
 from .coordinator import DreoDataUpdateCoordinator, DreoDehumidifierDeviceData
 from .entity import DreoEntity
@@ -20,7 +22,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
-    hass: HomeAssistant,
+    _hass: HomeAssistant,
     config_entry: DreoConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
@@ -56,7 +58,7 @@ async def async_setup_entry(
                     DreoGenericSensor(device, coordinator, sensor_type, sensor_conf)
                 )
 
-            if isinstance(coordinator.data, (DreoDehumidifierDeviceData)):
+            if isinstance(coordinator.data, DreoDehumidifierDeviceData):
                 sensors.append(DreoHumidityGenericSensor(device, coordinator))
 
         if sensors:
@@ -119,11 +121,13 @@ class DreoGenericSensor(DreoEntity, SensorEntity):
         if self._attr_device_class == SensorDeviceClass.TEMPERATURE:
             self._attr_suggested_unit_of_measurement = None
 
-    def get_initial_entity_options(self):
-        """Return initial entity options.
+    def get_initial_entity_options(self) -> dict[str, Any] | None:
+        """
+        Return initial entity options.
 
-        For temperature sensors, return None to prevent storing suggested_unit_of_measurement,
-        allowing Home Assistant's automatic temperature conversion to work.
+        For temperature sensors, return None to prevent storing
+        suggested_unit_of_measurement, allowing Home Assistant's automatic
+        temperature conversion to work.
         """
         if self._attr_device_class == SensorDeviceClass.TEMPERATURE:
             return None
@@ -131,7 +135,8 @@ class DreoGenericSensor(DreoEntity, SensorEntity):
 
     @callback
     def _async_read_entity_options(self) -> None:
-        """Read entity options from entity registry.
+        """
+        Read entity options from entity registry.
 
         For temperature sensors, clear _sensor_option_unit_of_measurement to allow
         Home Assistant's automatic temperature conversion to work.
