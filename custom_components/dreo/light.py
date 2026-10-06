@@ -26,6 +26,8 @@ if TYPE_CHECKING:
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
     from . import DreoConfigEntry
+from homeassistant.exceptions import HomeAssistantError
+
 from .const import (
     DOMAIN,
     DreoDeviceType,
@@ -43,6 +45,7 @@ from .coordinator import (
     DreoHumidifierDeviceData,
 )
 from .entity import DreoEntity
+from .rgbic import RGBICError
 
 _LOGGER = logging.getLogger(__name__)
 RGB_MAX = 255
@@ -147,6 +150,9 @@ class DreoRGBLight(DreoEntity, LightEntity):
         self._rgb_brightness = tuple[Any, ...](
             rgb_light_config.get(DreoFeatureSpec.RGB_BRIGHTNESS, [])
         )
+        if coordinator.rgbic_client is not None:
+            self._rgb_brightness = (1, 100)
+            self._attr_effect_list = coordinator.rgbic_client.effects
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -165,6 +171,12 @@ class DreoRGBLight(DreoEntity, LightEntity):
             return
 
         self._attr_available = fan_data.available
+        if self.coordinator.rgbic_client is not None and fan_data.rgb_state is None:
+            self._attr_available = False
+            self._attr_rgb_color = None
+            self._attr_effect = None
+            self._attr_brightness = None
+            return
 
         # Check if device has RGB features
         has_rgb = _has_rgb_features(fan_data)
@@ -172,6 +184,8 @@ class DreoRGBLight(DreoEntity, LightEntity):
         self._attr_effect = fan_data.rgb_mode if has_rgb else None
         self._attr_color_mode = ColorMode.RGB
 
+        if self.coordinator.rgbic_client is not None:
+            self._attr_rgb_color = None
         if fan_data.rgb_color is not None:
             color_int = fan_data.rgb_color
             r = (color_int >> 16) & RGB_MAX
@@ -194,6 +208,22 @@ class DreoRGBLight(DreoEntity, LightEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the RGB light."""
+        if self.coordinator.rgbic_client is not None:
+            brightness = kwargs.get(ATTR_BRIGHTNESS)
+            if brightness is not None:
+                brightness = max(1, min(100, round(brightness / RGB_MAX * 100)))
+            color = kwargs.get(ATTR_RGB_COLOR)
+            if color is not None:
+                color = "#{:02X}{:02X}{:02X}".format(*color)
+            try:
+                await self.coordinator.rgbic_client.command(
+                    brightness=brightness, effect=kwargs.get(ATTR_EFFECT), color=color
+                )
+            except RGBICError as error:
+                msg = "RGBIC command could not be verified"
+                raise HomeAssistantError(msg) from error
+            await self.coordinator.async_refresh()
+            return
         command_params: dict[str, Any] = {DreoDirective.AMBIENT_SWITCH: True}
 
         if ATTR_RGB_COLOR in kwargs:
@@ -256,6 +286,14 @@ class DreoRGBLight(DreoEntity, LightEntity):
 
     async def async_turn_off(self, **_: Any) -> None:
         """Turn off the RGB light."""
+        if self.coordinator.rgbic_client is not None:
+            try:
+                await self.coordinator.rgbic_client.command(on=False)
+            except RGBICError as error:
+                msg = "RGBIC command could not be verified"
+                raise HomeAssistantError(msg) from error
+            await self.coordinator.async_refresh()
+            return
         await self.async_send_command_and_update(
             DreoErrorCode.TURN_OFF_FAILED, ambient_switch=False
         )
@@ -268,11 +306,17 @@ class DreoRGBLight(DreoEntity, LightEntity):
     @property
     def brightness(self) -> int | None:
         """Return the brightness of this light between 0..255."""
+        if self.coordinator.rgbic_client is not None:
+            return self._attr_brightness
         current_rgb_mode = None
         if self.coordinator.data and _has_rgb_features(self.coordinator.data):
             current_rgb_mode = getattr(self.coordinator.data, "rgb_mode", None)
 
-        if current_rgb_mode == "Breath" and self._device_type != DreoDeviceType.HEC:
+        if (
+            self.coordinator.rgbic_client is None
+            and current_rgb_mode == "Breath"
+            and self._device_type != DreoDeviceType.HEC
+        ):
             return None
 
         return self._attr_brightness

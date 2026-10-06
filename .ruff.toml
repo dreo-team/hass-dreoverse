@@ -24,3 +24,8 @@ keep-runtime-typing = true
 
 [lint.mccabe]
 max-complexity = 25
+
+[lint.per-file-ignores]
+# Native unittest protocol fakes deliberately use assertion methods, synthetic
+# credentials, private seams, dynamic module loading and untyped boundary stubs.
+"tests/*.py" = ["ANN", "ARG", "D", "FBT003", "INP001", "PT009", "PT027", "S102", "S105", "S106", "SLF001"]
